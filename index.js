@@ -18,7 +18,7 @@ const swaggerOptions = {
       title: '🚀 Zionic API',
       version: '3.0.0',
       description: `
-# 📱 API Zionic - WhatsApp Business Integração
+# API Zionic - WhatsApp Business Integração
 
 **Plataforma completa para automação de WhatsApp Business**
 
@@ -26,30 +26,30 @@ const swaggerOptions = {
 
 A API Zionic oferece integração robusta com WhatsApp Business, permitindo envio de mensagens, mídia e automação completa de conversas.
 
-## 📋 **Recursos Disponíveis**
+## **Recursos Disponíveis**
 
-### 🔐 **Autenticação**
-- ✅ Teste de API Key - \`GET /api/auth/test\`
+### **Autenticação**
+- Teste de API Key - \`GET /api/auth/test\`
 
-### 📞 **Mensagens por Número**
-- ✅ Envio de texto - \`POST /api/messages/send\`
-- ✅ Envio de mídia com upload - \`POST /api/messages/send-media\` 
-- ✅ Resposta com citação - \`POST /api/messages/reply\`
+### **Mensagens por Número**
+- Envio de texto - \`POST /api/messages/send\`
+- Envio de mídia com upload - \`POST /api/messages/send-media\` 
+- Resposta com citação - \`POST /api/messages/reply\`
 
-### 📱 **Mensagens via URL**
-- ✅ Envio de texto - \`POST /api/conversation/send-text\`
-- ✅ Envio de imagem via URL - \`POST /api/conversation/send-image\`
-- ✅ Envio de áudio via URL - \`POST /api/conversation/send-audio\`
-- ✅ Envio de vídeo via URL - \`POST /api/conversation/send-video\`
-- ✅ Envio de documento via URL - \`POST /api/conversation/send-document\`
-- ✅ Marcar como lida - \`POST /api/conversation/mark-read\`
-- ✅ Obter dados da conversa - \`GET /api/conversation/:conversation_id\`
+### **Mensagens via Conversa**
+- Envio de texto - \`POST /api/conversation/send-text\`
+- Envio de imagem via URL - \`POST /api/conversation/send-image\`
+- Envio de áudio via URL - \`POST /api/conversation/send-audio\`
+- Envio de vídeo via URL - \`POST /api/conversation/send-video\`
+- Envio de documento via URL - \`POST /api/conversation/send-document\`
+- Marcar como lida - \`POST /api/conversation/mark-read\`
+- Obter dados da conversa - \`GET /api/conversation/:conversation_id\`
 
-### 📤 **Upload Direto de Arquivos**
-- ✅ Upload de imagem - \`POST /api/conversation/upload-image\`
-- ✅ Upload de áudio - \`POST /api/conversation/upload-audio\`
-- ✅ Upload de vídeo - \`POST /api/conversation/upload-video\`
-- ✅ Upload de documento - \`POST /api/conversation/upload-document\`
+### **Upload Direto de Arquivos**
+- Upload de imagem - \`POST /api/conversation/upload-image\`
+- Upload de áudio - \`POST /api/conversation/upload-audio\`
+- Upload de vídeo - \`POST /api/conversation/upload-video\`
+- Upload de documento - \`POST /api/conversation/upload-document\`
 
 ## 🔑 **Autenticação**
 
@@ -65,7 +65,7 @@ Authorization: Bearer zio_sua_api_key_aqui
 https://api.zionic.app
 \`\`\`
 
-## 📞 **Suporte**
+## **Suporte**
 
 - **Website:** https://zionic.app
 - **Email:** suporte@zionic.app
@@ -179,21 +179,126 @@ const customCSS = `
       line-height: 1.6;
     }
     
-    /* Header styling */
+    /* Logo Zionic SVG baseado no ZionixLogo.tsx */
+    .zionic-logo {
+      width: 32px;
+      height: 32px;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .zionic-logo-circle {
+      width: 16px;
+      height: 16px;
+      background: var(--scalar-color-1);
+      border-radius: 50%;
+      position: absolute;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      z-index: 2;
+    }
+    
+    .zionic-logo-ring {
+      width: 26px;
+      height: 26px;
+      border: 1px solid var(--scalar-color-1);
+      border-radius: 50%;
+      position: absolute;
+      opacity: 0.6;
+      animation: zionic-rotate 4s linear infinite;
+    }
+    
+    .zionic-logo-ring:nth-child(3) {
+      animation-duration: 6s;
+      animation-direction: reverse;
+    }
+    
+    @keyframes zionic-rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Header com logo personalizado */
     .scalar-api-reference__header {
       background: var(--scalar-background-sidebar);
       border-bottom: 1px solid var(--scalar-border-color);
       backdrop-filter: blur(20px);
       box-shadow: var(--scalar-shadow-sm);
+      padding: 1.5rem 2rem;
     }
     
-    /* Sidebar styling (igual ao app principal) */
-    .scalar-api-reference__sidebar {
-      background: var(--scalar-background-sidebar);
-      border-right: 1px solid var(--scalar-border-color);
-      box-shadow: var(--scalar-shadow-xl);
-      backdrop-filter: blur(20px);
+    .scalar-api-reference__header .scalar-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 700;
+      font-size: 1.25rem;
+      background: linear-gradient(135deg, var(--scalar-color-1), var(--scalar-color-primary));
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
+    
+    /* Esconder powered by scalar */
+    [class*="powered-by"], 
+    [class*="scalar-footer"],
+    .scalar-api-reference__footer,
+    a[href*="scalar.com"] {
+      display: none !important;
+    }
+    
+         /* Melhor espaçamento e organização */
+     .scalar-api-reference__content {
+       background: var(--scalar-background-2);
+       padding: 2rem;
+     }
+     
+     .scalar-operation {
+       margin-bottom: 3rem;
+       background: var(--scalar-background-card);
+       border: 1px solid var(--scalar-border-color);
+       border-radius: var(--scalar-radius-lg);
+       box-shadow: var(--scalar-shadow-md);
+       backdrop-filter: blur(16px);
+       overflow: hidden;
+     }
+     
+     .scalar-operation__header {
+       padding: 1.5rem 2rem;
+       border-bottom: 1px solid var(--scalar-border-color);
+       background: linear-gradient(135deg, var(--scalar-background-1), var(--scalar-background-2));
+     }
+     
+     .scalar-operation__content {
+       padding: 2rem;
+     }
+    
+         /* Sidebar styling (igual ao app principal) */
+     .scalar-api-reference__sidebar {
+       background: var(--scalar-background-sidebar);
+       border-right: 1px solid var(--scalar-border-color);
+       box-shadow: var(--scalar-shadow-xl);
+       backdrop-filter: blur(20px);
+       padding: 1.5rem 1rem;
+       width: 320px;
+       min-width: 320px;
+     }
+     
+     /* Tags de grupo mais organizadas */
+     .scalar-sidebar-group {
+       margin-bottom: 2rem;
+     }
+     
+     .scalar-sidebar-group-title {
+       font-size: 0.875rem;
+       font-weight: 600;
+       color: var(--scalar-color-2);
+       text-transform: uppercase;
+       letter-spacing: 0.05em;
+       margin-bottom: 0.75rem;
+       padding: 0 0.75rem;
+     }
     
     /* Cards e containers */
     .scalar-api-reference__content {
@@ -398,7 +503,7 @@ function generateScalarHTML() {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🚀 Zionic API - WhatsApp Business Documentation</title>
+  <title>Zionic API - WhatsApp Business Documentation</title>
   <meta name="description" content="Documentação interativa da API Zionic para automação de WhatsApp Business">
   <meta property="og:title" content="Zionic API Documentation">
   <meta property="og:description" content="API robusta para integração completa com WhatsApp Business">
@@ -438,10 +543,35 @@ function generateScalarHTML() {
   <script>
     // Configurações extras após carregamento
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('🚀 Zionic API Documentation carregada!');
+      console.log('⚡ Zionic API Documentation carregada!');
       console.log('🎨 Design System: Zionic + Scalar');
-      console.log('📱 Endpoints: 16 endpoints documentados');
+      console.log('📊 Endpoints: 16 endpoints documentados');
       console.log('🌐 Base URL: https://api.zionic.app');
+      
+      // Adicionar logo personalizado após carregamento
+      setTimeout(() => {
+        const header = document.querySelector('.scalar-api-reference__header');
+        if (header) {
+          const logoContainer = document.createElement('div');
+          logoContainer.className = 'scalar-logo';
+          logoContainer.innerHTML = \`
+            <div class="zionic-logo">
+              <div class="zionic-logo-ring"></div>
+              <div class="zionic-logo-ring"></div>
+              <div class="zionic-logo-circle"></div>
+            </div>
+            <span>ZIONIC API</span>
+          \`;
+          
+          // Substituir logo existente
+          const existingLogo = header.querySelector('.scalar-logo');
+          if (existingLogo) {
+            existingLogo.replaceWith(logoContainer);
+          } else {
+            header.appendChild(logoContainer);
+          }
+        }
+      }, 500);
     });
   </script>
 </body>
@@ -476,10 +606,10 @@ app.get('/health', (req, res) => {
  * @swagger
  * /api/auth/test:
  *   get:
- *     summary: 🔐 Testar API Key
+ *     summary: Testar API Key
  *     description: Verifica se a API Key fornecida é válida e retorna informações sobre a empresa e chave
  *     tags:
- *       - 🔐 Autenticação
+ *       - Autenticação
  *     security:
  *       - BearerAuth: []
  *     responses:
@@ -535,7 +665,7 @@ app.get('/health', (req, res) => {
  * @swagger
  * /api/messages/send:
  *   post:
- *     summary: 📱 Enviar Mensagem de Texto por Número
+ *     summary: Enviar Mensagem de Texto por Número
  *     description: Envia uma mensagem de texto diretamente para um número de telefone, criando automaticamente contato e conversa se necessário
  *     tags:
  *       - 📞 Mensagens por Número
@@ -628,7 +758,7 @@ app.get('/health', (req, res) => {
  * @swagger
  * /api/messages/send-media:
  *   post:
- *     summary: 📎 Enviar Mídia por Número
+ *     summary: Enviar Mídia por Número
  *     description: Envia um arquivo de mídia (imagem, vídeo, áudio ou documento) para um número de telefone
  *     tags:
  *       - 📞 Mensagens por Número
@@ -677,7 +807,7 @@ app.get('/health', (req, res) => {
  * @swagger
  * /api/messages/reply:
  *   post:
- *     summary: 💬 Responder Mensagem Específica
+ *     summary: Responder Mensagem Específica
  *     description: Responde uma mensagem específica citando-a (reply/quote), criando uma resposta linkada à mensagem original
  *     tags:
  *       - 📞 Mensagens por Número
@@ -727,7 +857,7 @@ app.get('/health', (req, res) => {
  * @swagger
  * /api/conversation/send-text:
  *   post:
- *     summary: 📱 Enviar Texto via Conversa
+ *     summary: Enviar Texto via Conversa
  *     description: Envia uma mensagem de texto para uma conversa existente usando conversation_id
  *     tags:
  *       - 📱 Mensagens via URL
@@ -1124,19 +1254,19 @@ app.get('/health', (req, res) => {
 
 app.listen(port, () => {
   console.log('');
-  console.log('🚀 ═══════════════════════════════════════════════');
-  console.log('🎯 ZIONIC API DOCUMENTATION - SCALAR EDITION');
-  console.log('🚀 ═══════════════════════════════════════════════');
+  console.log('⚡ ═══════════════════════════════════════════════');
+  console.log('   ZIONIC API DOCUMENTATION - PROFESSIONAL EDITION');
+  console.log('⚡ ═══════════════════════════════════════════════');
   console.log('');
-  console.log(`📚 Documentação: http://localhost:${port}`);
-  console.log(`📋 API Spec JSON: http://localhost:${port}/api-spec.json`);
-  console.log(`📄 API Spec YAML: http://localhost:${port}/api-spec.yaml`);
+  console.log(`📖 Documentação: http://localhost:${port}`);
+  console.log(`📄 API Spec JSON: http://localhost:${port}/api-spec.json`);
+  console.log(`📝 API Spec YAML: http://localhost:${port}/api-spec.yaml`);
   console.log(`💚 Health Check: http://localhost:${port}/health`);
   console.log('');
-  console.log(`🎨 Interface: Scalar API Reference (Design System Zionic)`);
-  console.log(`📱 Endpoints: 16 endpoints documentados`);
+  console.log(`🎨 Interface: Scalar API Reference (Zionic Design)`);
+  console.log(`📊 Endpoints: 16 endpoints completos`);
   console.log(`🌐 Base URL: https://api.zionic.app`);
-  console.log(`🎯 Status: Interface moderna igual ao app principal!`);
+  console.log(`✨ Status: Design profissional e organizado`);
   console.log('');
-  console.log('🚀 ═══════════════════════════════════════════════');
+  console.log('⚡ ═══════════════════════════════════════════════');
 }); 
