@@ -130,9 +130,13 @@ Bem-vindo ao sandbox da **Zionic API**! Aqui você pode testar todas as funciona
                   type: 'string',
                   description: 'ID da conversa'
                 },
-                contactName: {
+                contactId: {
                   type: 'string',
-                  description: 'Nome do contato'
+                  description: 'ID do contato'
+                },
+                instanceId: {
+                  type: 'string',
+                  description: 'ID da instância WhatsApp'
                 },
                 instanceName: {
                   type: 'string',
@@ -141,6 +145,22 @@ Bem-vindo ao sandbox da **Zionic API**! Aqui você pode testar todas as funciona
                 evolutionId: {
                   type: 'string',
                   description: 'ID da mensagem no WhatsApp'
+                },
+                isNewContact: {
+                  type: 'boolean',
+                  description: 'Se é um novo contato criado'
+                },
+                isNewConversation: {
+                  type: 'boolean',
+                  description: 'Se é uma nova conversa criada'
+                },
+                number: {
+                  type: 'string',
+                  description: 'Número limpo usado'
+                },
+                content: {
+                  type: 'string',
+                  description: 'Conteúdo da mensagem enviada'
                 },
                 sentAt: {
                   type: 'string',
@@ -151,6 +171,122 @@ Bem-vindo ao sandbox da **Zionic API**! Aqui você pode testar todas as funciona
                   type: 'string',
                   enum: ['text', 'image', 'audio', 'video', 'document'],
                   description: 'Tipo da mensagem'
+                },
+                company: {
+                  type: 'object',
+                  properties: {
+                    id: {
+                      type: 'string',
+                      description: 'ID da empresa'
+                    },
+                    name: {
+                      type: 'string',
+                      description: 'Nome da empresa'
+                    }
+                  }
+                },
+                apiKey: {
+                  type: 'object',
+                  properties: {
+                    name: {
+                      type: 'string',
+                      description: 'Nome da API Key'
+                    },
+                    used_at: {
+                      type: 'string',
+                      format: 'date-time',
+                      description: 'Último uso da API Key'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        MediaResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: true
+            },
+            message: {
+              type: 'string',
+              example: 'Mídia enviada com sucesso'
+            },
+            data: {
+              type: 'object',
+              properties: {
+                messageId: {
+                  type: 'string',
+                  description: 'ID da mensagem no banco de dados'
+                },
+                conversationId: {
+                  type: 'string',
+                  description: 'ID da conversa'
+                },
+                contactId: {
+                  type: 'string',
+                  description: 'ID do contato'
+                },
+                instanceId: {
+                  type: 'string',
+                  description: 'ID da instância WhatsApp'
+                },
+                instanceName: {
+                  type: 'string',
+                  description: 'Nome da instância WhatsApp'
+                },
+                evolutionId: {
+                  type: 'string',
+                  description: 'ID da mensagem no WhatsApp'
+                },
+                mediaType: {
+                  type: 'string',
+                  enum: ['image', 'audio', 'video', 'document'],
+                  description: 'Tipo de mídia enviada'
+                },
+                fileName: {
+                  type: 'string',
+                  description: 'Nome do arquivo original'
+                },
+                fileSize: {
+                  type: 'string',
+                  description: 'Tamanho do arquivo'
+                },
+                caption: {
+                  type: 'string',
+                  description: 'Legenda do arquivo (se fornecida)'
+                },
+                storageUrl: {
+                  type: 'string',
+                  description: 'URL do arquivo armazenado (para uploads)'
+                },
+                number: {
+                  type: 'string',
+                  description: 'Número do destinatário'
+                },
+                sentAt: {
+                  type: 'string',
+                  format: 'date-time',
+                  description: 'Timestamp do envio'
+                },
+                type: {
+                  type: 'string',
+                  description: 'Tipo da mensagem (igual a mediaType)'
+                },
+                company: {
+                  type: 'object',
+                  properties: {
+                    id: {
+                      type: 'string',
+                      description: 'ID da empresa'
+                    },
+                    name: {
+                      type: 'string',
+                      description: 'Nome da empresa'
+                    }
+                  }
                 }
               }
             }
@@ -994,7 +1130,7 @@ const swaggerUiOptions = {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/MessageResponse'
+ *               $ref: '#/components/schemas/MediaResponse'
  *       400:
  *         description: Arquivo inválido ou parâmetros incorretos
  *         content:
@@ -1044,7 +1180,7 @@ const swaggerUiOptions = {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/MessageResponse'
+ *               $ref: '#/components/schemas/MediaResponse'
  *       400:
  *         description: Arquivo inválido ou parâmetros incorretos
  *         content:
@@ -1098,7 +1234,7 @@ const swaggerUiOptions = {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/MessageResponse'
+ *               $ref: '#/components/schemas/MediaResponse'
  *       400:
  *         description: Arquivo inválido ou parâmetros incorretos
  *         content:
@@ -1152,7 +1288,7 @@ const swaggerUiOptions = {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/MessageResponse'
+ *               $ref: '#/components/schemas/MediaResponse'
  *       400:
  *         description: Arquivo inválido ou parâmetros incorretos
  *         content:
@@ -1267,7 +1403,7 @@ const swaggerUiOptions = {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/MessageResponse'
+ *               $ref: '#/components/schemas/MediaResponse'
  *       400:
  *         description: Arquivo ou parâmetros inválidos
  *         content:
