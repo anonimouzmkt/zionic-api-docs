@@ -36,7 +36,7 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Envio de mídia com upload - \`POST /api/messages/send-media\` 
 - Resposta com citação - \`POST /api/messages/reply\`
 
-### **Mensagens via Conversa**
+### **Mensagens via Conversation**
 - Envio de texto - \`POST /api/conversation/send-text\`
 - Envio de imagem via URL - \`POST /api/conversation/send-image\`
 - Envio de áudio via URL - \`POST /api/conversation/send-audio\`
@@ -179,7 +179,7 @@ const customCSS = `
       line-height: 1.6;
     }
     
-    /* Logo Zionic SVG baseado no ZionixLogo.tsx */
+    /* Logo Zionic oficial */
     .zionic-logo {
       width: 32px;
       height: 32px;
@@ -189,43 +189,24 @@ const customCSS = `
       justify-content: center;
     }
     
-    .zionic-logo-circle {
-      width: 16px;
-      height: 16px;
-      background: var(--scalar-color-1);
-      border-radius: 50%;
-      position: absolute;
+    .zionic-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 6px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      z-index: 2;
     }
     
-    .zionic-logo-ring {
-      width: 26px;
-      height: 26px;
-      border: 1px solid var(--scalar-color-1);
-      border-radius: 50%;
-      position: absolute;
-      opacity: 0.6;
-      animation: zionic-rotate 4s linear infinite;
-    }
-    
-    .zionic-logo-ring:nth-child(3) {
-      animation-duration: 6s;
-      animation-direction: reverse;
-    }
-    
-    @keyframes zionic-rotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    
-    /* Header com logo personalizado */
+    /* Header com logo personalizado - Design melhorado */
     .scalar-api-reference__header {
-      background: var(--scalar-background-sidebar);
+      background: linear-gradient(135deg, #ffffff, #f8fafc);
       border-bottom: 1px solid var(--scalar-border-color);
       backdrop-filter: blur(20px);
-      box-shadow: var(--scalar-shadow-sm);
-      padding: 1.5rem 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      padding: 2rem 2.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
     
     .scalar-api-reference__header .scalar-logo {
@@ -248,56 +229,66 @@ const customCSS = `
       display: none !important;
     }
     
-         /* Melhor espaçamento e organização */
+         /* Design melhorado - Mais clean e espaçado */
      .scalar-api-reference__content {
-       background: var(--scalar-background-2);
-       padding: 2rem;
+       background: #fafbfc;
+       padding: 3rem 2.5rem;
+       min-height: 100vh;
      }
      
      .scalar-operation {
-       margin-bottom: 3rem;
-       background: var(--scalar-background-card);
-       border: 1px solid var(--scalar-border-color);
-       border-radius: var(--scalar-radius-lg);
-       box-shadow: var(--scalar-shadow-md);
-       backdrop-filter: blur(16px);
+       margin-bottom: 4rem;
+       background: #ffffff;
+       border: 1px solid rgba(230, 232, 236, 0.8);
+       border-radius: 16px;
+       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+       backdrop-filter: blur(20px);
        overflow: hidden;
+       transition: all 0.3s ease;
+     }
+     
+     .scalar-operation:hover {
+       transform: translateY(-2px);
+       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
      }
      
      .scalar-operation__header {
-       padding: 1.5rem 2rem;
-       border-bottom: 1px solid var(--scalar-border-color);
-       background: linear-gradient(135deg, var(--scalar-background-1), var(--scalar-background-2));
+       padding: 2rem 2.5rem;
+       border-bottom: 1px solid rgba(230, 232, 236, 0.6);
+       background: linear-gradient(135deg, #ffffff, #f9fafb);
      }
      
      .scalar-operation__content {
-       padding: 2rem;
+       padding: 2.5rem;
      }
     
-         /* Sidebar styling (igual ao app principal) */
+         /* Sidebar - Design clean e organizado */
      .scalar-api-reference__sidebar {
-       background: var(--scalar-background-sidebar);
-       border-right: 1px solid var(--scalar-border-color);
-       box-shadow: var(--scalar-shadow-xl);
+       background: linear-gradient(180deg, #ffffff, #fcfcfd);
+       border-right: 1px solid rgba(230, 232, 236, 0.8);
+       box-shadow: 4px 0 24px rgba(0, 0, 0, 0.06);
        backdrop-filter: blur(20px);
-       padding: 1.5rem 1rem;
-       width: 320px;
-       min-width: 320px;
+       padding: 2rem 1.5rem;
+       width: 340px;
+       min-width: 340px;
      }
      
-     /* Tags de grupo mais organizadas */
+     /* Tags de grupo com melhor visual */
      .scalar-sidebar-group {
-       margin-bottom: 2rem;
+       margin-bottom: 2.5rem;
      }
      
      .scalar-sidebar-group-title {
-       font-size: 0.875rem;
-       font-weight: 600;
-       color: var(--scalar-color-2);
+       font-size: 0.8rem;
+       font-weight: 700;
+       color: #64748b;
        text-transform: uppercase;
-       letter-spacing: 0.05em;
-       margin-bottom: 0.75rem;
-       padding: 0 0.75rem;
+       letter-spacing: 0.08em;
+       margin-bottom: 1rem;
+       padding: 0.5rem 1rem;
+       background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+       border-radius: 8px;
+       border-left: 3px solid var(--scalar-color-primary);
      }
     
     /* Cards e containers */
@@ -462,22 +453,49 @@ const customCSS = `
       backdrop-filter: blur(16px);
     }
     
-    /* Navigation improvements */
+    /* Navigation improvements - Clean design */
     .scalar-sidebar-item {
-      border-radius: var(--scalar-radius);
-      transition: all 0.3s ease;
-      margin: 0.125rem 0;
+      border-radius: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin: 0.25rem 0;
+      padding: 0.75rem 1rem !important;
+      font-weight: 500;
+      border: 1px solid transparent;
     }
     
     .scalar-sidebar-item:hover {
-      background: rgba(59, 130, 246, 0.1);
-      transform: translateX(4px);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.05));
+      transform: translateX(6px);
+      border-color: rgba(59, 130, 246, 0.2);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
     }
     
     .scalar-sidebar-item.active {
       background: linear-gradient(135deg, var(--scalar-color-primary), var(--scalar-color-secondary));
       color: white;
-      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+      transform: translateX(4px);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Melhor tipografia */
+    h1, h2, h3, h4, h5, h6 {
+      background: linear-gradient(135deg, #1f2937, #3b82f6);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+    
+    /* Badge de métodos HTTP mais elegantes */
+    .scalar-tag {
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      border-radius: 6px;
+      padding: 0.375rem 0.75rem;
+      text-transform: uppercase;
     }
   `;
 
@@ -527,7 +545,7 @@ function generateScalarHTML() {
   <script 
     id="api-reference" 
     type="application/json"
-    data-url="/api-spec.json"
+    data-url="https://docs.zionic.app/api-spec.json"
     data-configuration='${JSON.stringify({
       theme: 'none',
       showSidebar: true,
@@ -556,9 +574,7 @@ function generateScalarHTML() {
           logoContainer.className = 'scalar-logo';
           logoContainer.innerHTML = \`
             <div class="zionic-logo">
-              <div class="zionic-logo-ring"></div>
-              <div class="zionic-logo-ring"></div>
-              <div class="zionic-logo-circle"></div>
+              <img src="https://anonimouz.com/wp-content/uploads/2025/06/4.png" alt="Zionic Logo" />
             </div>
             <span>ZIONIC API</span>
           \`;
@@ -860,7 +876,7 @@ app.get('/health', (req, res) => {
  *     summary: Enviar Texto via Conversa
  *     description: Envia uma mensagem de texto para uma conversa existente usando conversation_id
  *     tags:
- *       - 📱 Mensagens via URL
+ *       - 💬 Mensagens via Conversation
  *     security:
  *       - BearerAuth: []
  *     requestBody:
@@ -900,7 +916,7 @@ app.get('/health', (req, res) => {
  *     summary: 📸 Enviar Imagem via URL
  *     description: Envia uma imagem através de URL pública para uma conversa
  *     tags:
- *       - 📱 Mensagens via URL
+ *       - 💬 Mensagens via Conversation
  *     security:
  *       - BearerAuth: []
  *     requestBody:
@@ -945,7 +961,7 @@ app.get('/health', (req, res) => {
  *     summary: 🎵 Enviar Áudio via URL
  *     description: Envia um arquivo de áudio através de URL pública para uma conversa
  *     tags:
- *       - 📱 Mensagens via URL
+ *       - 💬 Mensagens via Conversation
  *     security:
  *       - BearerAuth: []
  *     requestBody:
@@ -986,7 +1002,7 @@ app.get('/health', (req, res) => {
  *     summary: 🎬 Enviar Vídeo via URL
  *     description: Envia um arquivo de vídeo através de URL pública para uma conversa
  *     tags:
- *       - 📱 Mensagens via URL
+ *       - 💬 Mensagens via Conversation
  *     security:
  *       - BearerAuth: []
  *     requestBody:
@@ -1025,7 +1041,7 @@ app.get('/health', (req, res) => {
  *     summary: 📄 Enviar Documento via URL
  *     description: Envia um documento através de URL pública para uma conversa
  *     tags:
- *       - 📱 Mensagens via URL
+ *       - 💬 Mensagens via Conversation
  *     security:
  *       - BearerAuth: []
  *     requestBody:
@@ -1064,7 +1080,7 @@ app.get('/health', (req, res) => {
  *     summary: 👁️ Marcar Conversa como Lida
  *     description: Marca as mensagens de uma conversa como lidas
  *     tags:
- *       - 📱 Mensagens via URL
+ *       - 💬 Mensagens via Conversation
  *     security:
  *       - BearerAuth: []
  *     requestBody:
@@ -1092,7 +1108,7 @@ app.get('/health', (req, res) => {
  *     summary: 📋 Obter Dados da Conversa
  *     description: Busca informações completas de uma conversa incluindo contato, instância e últimas mensagens
  *     tags:
- *       - 📱 Mensagens via URL
+ *       - 💬 Mensagens via Conversation
  *     security:
  *       - BearerAuth: []
  *     parameters:
@@ -1255,7 +1271,7 @@ app.get('/health', (req, res) => {
 app.listen(port, () => {
   console.log('');
   console.log('⚡ ═══════════════════════════════════════════════');
-  console.log('   ZIONIC API DOCUMENTATION - PROFESSIONAL EDITION');
+  console.log('   ZIONIC API DOCUMENTATION - CLEAN & MODERN EDITION');
   console.log('⚡ ═══════════════════════════════════════════════');
   console.log('');
   console.log(`📖 Documentação: http://localhost:${port}`);
@@ -1263,10 +1279,12 @@ app.listen(port, () => {
   console.log(`📝 API Spec YAML: http://localhost:${port}/api-spec.yaml`);
   console.log(`💚 Health Check: http://localhost:${port}/health`);
   console.log('');
-  console.log(`🎨 Interface: Scalar API Reference (Zionic Design)`);
-  console.log(`📊 Endpoints: 16 endpoints completos`);
+  console.log(`🎨 Interface: Scalar API Reference (Clean Design)`);
+  console.log(`📊 Endpoints: 16 endpoints organizados`);
   console.log(`🌐 Base URL: https://api.zionic.app`);
-  console.log(`✨ Status: Design profissional e organizado`);
+  console.log(`🖼️ Logo: Zionic oficial integrado`);
+  console.log(`📱 Sidebar: Mensagens via Conversation (organizado)`);
+  console.log(`✨ Status: Design clean, detalhado e moderno`);
   console.log('');
   console.log('⚡ ═══════════════════════════════════════════════');
 }); 
