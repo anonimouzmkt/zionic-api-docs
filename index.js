@@ -16,7 +16,7 @@ const swaggerOptions = {
     openapi: '3.0.3',
     info: {
       title: '🚀 Zionic API',
-      version: '3.0.0',
+      version: '3.1.0',
       description: `
 # API Zionic - WhatsApp Business Integração
 
@@ -50,6 +50,9 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Upload de áudio - \`POST /api/conversation/upload-audio\`
 - Upload de vídeo - \`POST /api/conversation/upload-video\`
 - Upload de documento - \`POST /api/conversation/upload-document\`
+
+### **Controle de Agentes** ✨ **NOVO na v3.1**
+- Pausar ou atribuir agentes - \`POST /api/conversation/agent-control\`
 
 ## 🔑 **Autenticação**
 
@@ -610,10 +613,10 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     service: 'Zionic API Documentation',
-    version: '3.0.0',
+    version: '3.1.0',
     timestamp: new Date().toISOString(),
     ui: 'Scalar API Reference',
-    endpoints: 16,
+    endpoints: 17,
     baseUrl: 'https://api.zionic.app'
   });
 });
@@ -1268,6 +1271,276 @@ app.get('/health', (req, res) => {
  *         description: Documento enviado com sucesso
  */
 
+/**
+ * @swagger
+ * /api/conversation/agent-control:
+ *   post:
+ *     summary: 🎛️ Controlar Agentes na Conversa
+ *     description: |
+ *       **🆕 NOVO na v3.1** - Permite pausar, ativar e atribuir agentes (IA ou humanos) em conversas específicas.
+ *       
+ *       **Ações Disponíveis:**
+ *       - `assign_ai` - Atribuir agente IA (requer ai_agent_id)
+ *       - `pause_ai` - Pausar agente IA (mantém atribuição)
+ *       - `resume_ai` - Reativar agente IA
+ *       - `assign_human` - Atribuir agente humano (requer assigned_to)
+ *       - `unassign_human` - Remover atribuição humana
+ *       - `remove_ai` - Remover agente IA completamente
+ *       
+ *       **Regras de Negócio:**
+ *       - Atribuir humano pausa automaticamente a IA
+ *       - Só agentes ativos podem ser atribuídos
+ *       - Só usuários da mesma empresa podem ser atribuídos
+ *       - Todas as ações são auditadas automaticamente
+ *     tags:
+ *       - 🎛️ Controle de Agentes (v3.1)
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - conversation_id
+ *               - action
+ *             properties:
+ *               conversation_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID único da conversa a ser modificada
+ *                 example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *               action:
+ *                 type: string
+ *                 enum: [assign_ai, pause_ai, resume_ai, assign_human, unassign_human, remove_ai]
+ *                 description: Ação a ser executada na conversa
+ *                 example: "assign_ai"
+ *               ai_agent_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID do agente IA (obrigatório para action "assign_ai")
+ *                 example: "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+ *               assigned_to:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID do usuário/agente humano (obrigatório para action "assign_human")
+ *                 example: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+ *           examples:
+ *             assign_ai:
+ *               summary: Atribuir Agente IA
+ *               value:
+ *                 conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                 action: "assign_ai"
+ *                 ai_agent_id: "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+ *             pause_ai:
+ *               summary: Pausar Agente IA
+ *               value:
+ *                 conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                 action: "pause_ai"
+ *             assign_human:
+ *               summary: Atribuir Agente Humano
+ *               value:
+ *                 conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                 action: "assign_human"
+ *                 assigned_to: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+ *             resume_ai:
+ *               summary: Reativar Agente IA
+ *               value:
+ *                 conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                 action: "resume_ai"
+ *             remove_ai:
+ *               summary: Remover Agente IA
+ *               value:
+ *                 conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                 action: "remove_ai"
+ *             unassign_human:
+ *               summary: Remover Atribuição Humana
+ *               value:
+ *                 conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                 action: "unassign_human"
+ *     responses:
+ *       200:
+ *         description: Ação executada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Agente IA 'Atendente Virtual' atribuído e ativado"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     conversation_id:
+ *                       type: string
+ *                       format: uuid
+ *                       example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                     contact_name:
+ *                       type: string
+ *                       example: "João Silva"
+ *                     conversation_title:
+ *                       type: string
+ *                       example: "WhatsApp Conversation"
+ *                     action_performed:
+ *                       type: string
+ *                       example: "assign_ai"
+ *                     current_state:
+ *                       type: object
+ *                       properties:
+ *                         ai_agent:
+ *                           type: object
+ *                           nullable: true
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                               format: uuid
+ *                             name:
+ *                               type: string
+ *                               example: "Atendente Virtual"
+ *                             enabled:
+ *                               type: boolean
+ *                               example: true
+ *                         human_agent:
+ *                           type: object
+ *                           nullable: true
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                               format: uuid
+ *                             name:
+ *                               type: string
+ *                               example: "Ana Silva"
+ *                         ai_enabled:
+ *                           type: boolean
+ *                           example: true
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-01-15T10:30:00.000Z"
+ *             examples:
+ *               ai_assigned:
+ *                 summary: Agente IA Atribuído
+ *                 value:
+ *                   success: true
+ *                   message: "Agente IA 'Atendente Virtual' atribuído e ativado"
+ *                   data:
+ *                     conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                     contact_name: "João Silva"
+ *                     conversation_title: "WhatsApp Conversation"
+ *                     action_performed: "assign_ai"
+ *                     current_state:
+ *                       ai_agent:
+ *                         id: "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+ *                         name: "Atendente Virtual"
+ *                         enabled: true
+ *                       human_agent: null
+ *                       ai_enabled: true
+ *                     timestamp: "2024-01-15T10:30:00.000Z"
+ *               human_assigned:
+ *                 summary: Agente Humano Atribuído
+ *                 value:
+ *                   success: true
+ *                   message: "Atribuído ao agente humano 'Ana Silva' (IA pausada)"
+ *                   data:
+ *                     conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                     contact_name: "João Silva"
+ *                     action_performed: "assign_human"
+ *                     current_state:
+ *                       ai_agent:
+ *                         id: "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+ *                         name: "Atendente Virtual"
+ *                         enabled: false
+ *                       human_agent:
+ *                         id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+ *                         name: "Ana Silva"
+ *                       ai_enabled: false
+ *       400:
+ *         description: Parâmetros inválidos ou ação não permitida
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "ai_agent_id é obrigatório para action 'assign_ai'"
+ *                 actions:
+ *                   type: object
+ *                   description: Lista de ações disponíveis e seus requisitos
+ *                   properties:
+ *                     assign_ai:
+ *                       type: string
+ *                       example: "Atribuir agente IA (requer ai_agent_id)"
+ *                     pause_ai:
+ *                       type: string
+ *                       example: "Pausar agente IA"
+ *                     resume_ai:
+ *                       type: string
+ *                       example: "Reativar agente IA (mantém ai_agent_id atual)"
+ *                     assign_human:
+ *                       type: string
+ *                       example: "Atribuir agente humano (requer assigned_to)"
+ *                     unassign_human:
+ *                       type: string
+ *                       example: "Remover atribuição humana"
+ *                     remove_ai:
+ *                       type: string
+ *                       example: "Remover agente IA completamente"
+ *       401:
+ *         description: Token de autenticação inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Token de acesso obrigatório"
+ *                 message:
+ *                   type: string
+ *                   example: "Inclua o header: Authorization: Bearer YOUR_API_KEY"
+ *       404:
+ *         description: Conversa, agente ou usuário não encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Conversa não encontrada ou sem acesso"
+ *                 details:
+ *                   type: string
+ *                   example: "No rows returned"
+ *       500:
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Erro interno do servidor"
+ *                 details:
+ *                   type: string
+ *                   example: "Database connection failed"
+ */
+
 app.listen(port, () => {
   console.log('');
   console.log('⚡ ═══════════════════════════════════════════════');
@@ -1280,10 +1553,10 @@ app.listen(port, () => {
   console.log(`💚 Health Check: http://localhost:${port}/health`);
   console.log('');
   console.log(`🎨 Interface: Scalar API Reference (Clean Design)`);
-  console.log(`📊 Endpoints: 16 endpoints organizados`);
+  console.log(`📊 Endpoints: 17 endpoints organizados`);
   console.log(`🌐 Base URL: https://api.zionic.app`);
   console.log(`🖼️ Logo: Zionic oficial integrado`);
-  console.log(`📱 Sidebar: Mensagens via Conversation (organizado)`);
+  console.log(`📱 Sidebar: Mensagens + Agent Control (organizado)`);
   console.log(`✨ Status: Design clean, detalhado e moderno`);
   console.log('');
   console.log('⚡ ═══════════════════════════════════════════════');
