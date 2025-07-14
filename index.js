@@ -16,7 +16,7 @@ const swaggerOptions = {
     openapi: '3.0.3',
     info: {
       title: '🚀 Zionic API',
-      version: '3.3.0',
+      version: '3.4.0',
       description: `
 # API Zionic - WhatsApp Business Integração
 
@@ -82,6 +82,12 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Listar agendamentos - \`GET /api/calendar/appointments\`
 - Atualizar agendamento - \`PUT /api/calendar/appointments/:id\`
 - Deletar agendamento - \`DELETE /api/calendar/appointments/:id\`
+
+### **Mensagens de Custom Agents** 🤖 **NOVO na v3.4**
+- Marcação visual diferenciada - parâmetro \`sent_via_agent\`
+- Identificação automática de mensagens via webhooks/automações
+- Badge roxo "Enviado via Custom Agent" no chat
+- Integração com N8N e sistemas externos
 
 ## 🔑 **Autenticação**
 
@@ -642,7 +648,7 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     service: 'Zionic API Documentation',
-    version: '3.3.0',
+    version: '3.4.0',
     timestamp: new Date().toISOString(),
     ui: 'Scalar API Reference',
     endpoints: 35,
@@ -906,7 +912,24 @@ app.get('/health', (req, res) => {
  * /api/conversation/send-text:
  *   post:
  *     summary: Enviar Texto via Conversa
- *     description: Envia uma mensagem de texto para uma conversa existente usando conversation_id
+ *     description: |
+ *       Envia uma mensagem de texto para uma conversa existente usando conversation_id.
+ *       
+ *       **✨ NOVO na v3.4:** Parâmetro `sent_via_agent` para marcar mensagens enviadas via custom agents.
+ *       
+ *       **Funcionalidades:**
+ *       - Envio direto para conversas existentes
+ *       - Controle de delay personalizado
+ *       - **Novo:** Marcação visual para mensagens de custom agents
+ *       - Salva automaticamente no histórico da conversa
+ *       - Integração com sistema de notificações
+ *       
+ *       **Visual Diferenciado para Custom Agents:**
+ *       Mensagens marcadas com `sent_via_agent: true` aparecem no chat com:
+ *       - Badge roxo "Enviado via Custom Agent"
+ *       - Ícone especial MessageSquare
+ *       - Background diferenciado
+ *       - Timestamp roxo
  *     tags:
  *       - 💬 Mensagens via Conversation
  *     security:
@@ -930,15 +953,166 @@ app.get('/health', (req, res) => {
  *                 type: string
  *                 description: Texto da mensagem a ser enviada
  *                 example: "Olá! Como posso ajudá-lo hoje?"
+ *                 maxLength: 4096
  *               delay:
  *                 type: integer
  *                 description: Delay em milissegundos antes do envio
  *                 example: 1000
+ *                 minimum: 0
+ *                 maximum: 30000
+ *               sent_via_agent:
+ *                 type: boolean
+ *                 description: |
+ *                   **✨ NOVO na v3.4** - Marca a mensagem como enviada via custom agent.
+ *                   
+ *                   Quando `true`, a mensagem aparece no chat com visual diferenciado:
+ *                   - Badge roxo "Enviado via Custom Agent"
+ *                   - Ícone MessageSquare especial
+ *                   - Background roxo claro/escuro conforme tema
+ *                   - Timestamp em cor roxa
+ *                   
+ *                   **Casos de uso:**
+ *                   - Webhooks N8N que enviam mensagens
+ *                   - Automações via API externa
+ *                   - Integrações custom de terceiros
+ *                   - Bots personalizados da empresa
+ *                 example: false
+ *                 default: false
+ *           examples:
+ *             basic_message:
+ *               summary: Mensagem Normal
+ *               value:
+ *                 conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                 message: "Olá! Como posso ajudá-lo hoje?"
+ *                 delay: 1000
+ *                 sent_via_agent: false
+ *             custom_agent_message:
+ *               summary: Mensagem via Custom Agent
+ *               description: Mensagem enviada por webhook/automação que será destacada no chat
+ *               value:
+ *                 conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                 message: "Esta mensagem foi processada pelo meu sistema personalizado!"
+ *                 delay: 1500
+ *                 sent_via_agent: true
+ *             n8n_webhook:
+ *               summary: Webhook N8N
+ *               description: Exemplo de mensagem enviada via webhook N8N
+ *               value:
+ *                 conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                 message: "Olá! Processamos sua solicitação e já temos uma resposta personalizada para você."
+ *                 sent_via_agent: true
  *     responses:
  *       200:
  *         description: Mensagem enviada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Mensagem enviada com sucesso"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message_id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: ID da mensagem salva no banco
+ *                     conversation_id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: ID da conversa
+ *                     content:
+ *                       type: string
+ *                       description: Conteúdo da mensagem enviada
+ *                     sent_via_agent:
+ *                       type: boolean
+ *                       description: Se foi marcada como enviada via custom agent
+ *                     visual_indicator:
+ *                       type: string
+ *                       description: Tipo de indicador visual no chat
+ *                       example: "custom_agent_badge"
+ *                     whatsapp_id:
+ *                       type: string
+ *                       description: ID da mensagem no WhatsApp
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *                       description: Timestamp do envio
+ *             examples:
+ *               normal_message:
+ *                 summary: Mensagem Normal Enviada
+ *                 value:
+ *                   success: true
+ *                   message: "Mensagem enviada com sucesso"
+ *                   data:
+ *                     message_id: "550e8400-e29b-41d4-a716-446655440000"
+ *                     conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                     content: "Olá! Como posso ajudá-lo hoje?"
+ *                     sent_via_agent: false
+ *                     visual_indicator: "none"
+ *                     whatsapp_id: "3EB0C9CB8A3A4E7F9D2A"
+ *                     timestamp: "2024-01-15T10:30:00.000Z"
+ *               custom_agent_message:
+ *                 summary: Custom Agent Message Enviada
+ *                 value:
+ *                   success: true
+ *                   message: "Mensagem via custom agent enviada com sucesso"
+ *                   data:
+ *                     message_id: "660f9500-f3ac-51e5-b827-557766551111"
+ *                     conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                     content: "Esta mensagem foi processada pelo meu sistema personalizado!"
+ *                     sent_via_agent: true
+ *                     visual_indicator: "custom_agent_badge"
+ *                     whatsapp_id: "4FC1D2DC9B4B5F8A0E3B"
+ *                     timestamp: "2024-01-15T10:32:00.000Z"
+ *       400:
+ *         description: Parâmetros inválidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Parâmetros obrigatórios: conversation_id, message"
+ *                 example:
+ *                   type: object
+ *                   properties:
+ *                     conversation_id:
+ *                       type: string
+ *                       example: "uuid-da-conversa"
+ *                     message:
+ *                       type: string
+ *                       example: "Sua mensagem aqui"
+ *                     delay:
+ *                       type: integer
+ *                       example: 1000
+ *                     sent_via_agent:
+ *                       type: boolean
+ *                       example: false
  *       404:
  *         description: Conversa não encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Conversa não encontrada"
+ *       500:
+ *         description: Erro interno do servidor
  */
 
 /**
@@ -3040,6 +3214,7 @@ app.listen(port, () => {
   console.log(`🖼️ Logo: Zionic oficial integrado`);
   console.log(`📱 Sidebar: Mensagens + Agent Control + CRM (organizado)`);
   console.log(`🎯 Novos: Leads, Pipelines, Columns e Calendar Management (v3.3)`);
+  console.log(`🤖 v3.4: Custom Agent Messages com visual diferenciado`);
   console.log(`✨ Status: Design clean, detalhado e moderno`);
   console.log('');
   console.log('⚡ ═══════════════════════════════════════════════');
