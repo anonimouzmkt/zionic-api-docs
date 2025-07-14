@@ -16,7 +16,7 @@ const swaggerOptions = {
     openapi: '3.0.3',
     info: {
       title: '🚀 Zionic API',
-      version: '3.1.0',
+      version: '3.2.0',
       description: `
 # API Zionic - WhatsApp Business Integração
 
@@ -53,6 +53,28 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 
 ### **Controle de Agentes** ✨ **NOVO na v3.1**
 - Pausar ou atribuir agentes - \`POST /api/conversation/agent-control\`
+
+### **Gerenciamento de Leads** 🎯 **NOVO na v3.2**
+- Listar leads - \`GET /api/leads\`
+- Criar lead - \`POST /api/leads\`
+- Buscar lead específico - \`GET /api/leads/:id\`
+- Atualizar lead - \`PUT /api/leads/:id\`
+- Deletar lead - \`DELETE /api/leads/:id\`
+- Mover lead entre colunas - \`POST /api/leads/:id/move\`
+- Listar leads de uma coluna - \`GET /api/leads/column/:column_id\`
+
+### **Gerenciamento de Pipelines** 📊 **NOVO na v3.2**
+- Listar pipelines - \`GET /api/pipelines\`
+- Buscar pipeline específico - \`GET /api/pipelines/:id\`
+- Buscar pipeline padrão - \`GET /api/pipelines/default/info\`
+- Listar colunas de um pipeline - \`GET /api/pipelines/:id/columns\`
+- Listar todas as colunas - \`GET /api/pipelines/columns/all\`
+- Estatísticas do pipeline - \`GET /api/pipelines/:id/stats\`
+
+### **Gerenciamento de Colunas** 📋 **NOVO na v3.2**
+- Listar colunas - \`GET /api/columns\`
+- Buscar coluna específica - \`GET /api/columns/:id\`
+- Listar leads de uma coluna - \`GET /api/columns/:id/leads\`
 
 ## 🔑 **Autenticação**
 
@@ -613,10 +635,10 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     service: 'Zionic API Documentation',
-    version: '3.1.0',
+    version: '3.2.0',
     timestamp: new Date().toISOString(),
     ui: 'Scalar API Reference',
-    endpoints: 17,
+    endpoints: 30,
     baseUrl: 'https://api.zionic.app'
   });
 });
@@ -1541,6 +1563,640 @@ app.get('/health', (req, res) => {
  *                   example: "Database connection failed"
  */
 
+/**
+ * @swagger
+ * /api/leads:
+ *   get:
+ *     summary: Listar Leads
+ *     description: Lista todos os leads da empresa com opções de filtro, busca e paginação
+ *     tags:
+ *       - 🎯 Leads Management
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [open, contacted, qualified, proposal, negotiation, won, lost, invalid]
+ *         description: Filtrar por status do lead
+ *       - in: query
+ *         name: priority
+ *         schema:
+ *           type: string
+ *           enum: [low, medium, high, urgent]
+ *         description: Filtrar por prioridade
+ *       - in: query
+ *         name: source
+ *         schema:
+ *           type: string
+ *         description: Filtrar por fonte (whatsapp, instagram, website, etc.)
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Buscar por título, empresa ou email
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Página para paginação
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Limite de leads por página
+ *     responses:
+ *       200:
+ *         description: Lista de leads retornada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     leads:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                             format: uuid
+ *                           title:
+ *                             type: string
+ *                             example: "João Silva - Interessado em Automação"
+ *                           description:
+ *                             type: string
+ *                           company:
+ *                             type: string
+ *                             example: "Silva Tech"
+ *                           email:
+ *                             type: string
+ *                             example: "joao@silvatech.com"
+ *                           phone:
+ *                             type: string
+ *                             example: "11999999999"
+ *                           estimated_value:
+ *                             type: number
+ *                             example: 5000.00
+ *                           status:
+ *                             type: string
+ *                             example: "open"
+ *                           priority:
+ *                             type: string
+ *                             example: "high"
+ *                           source:
+ *                             type: string
+ *                             example: "whatsapp"
+ *                           tags:
+ *                             type: array
+ *                             items:
+ *                               type: string
+ *                           created_at:
+ *                             type: string
+ *                             format: date-time
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: integer
+ *                         page:
+ *                           type: integer
+ *                         limit:
+ *                           type: integer
+ *                         totalPages:
+ *                           type: integer
+ *   post:
+ *     summary: Criar Lead
+ *     description: Cria um novo lead no sistema usando a função unificada do banco
+ *     tags:
+ *       - 🎯 Leads Management
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: "João Silva - Interessado em Automação"
+ *               description:
+ *                 type: string
+ *                 example: "Cliente interessado em automação de WhatsApp"
+ *               company:
+ *                 type: string
+ *                 example: "Silva Tech"
+ *               email:
+ *                 type: string
+ *                 example: "joao@silvatech.com"
+ *               phone:
+ *                 type: string
+ *                 example: "11999999999"
+ *               estimated_value:
+ *                 type: number
+ *                 example: 5000.00
+ *               priority:
+ *                 type: string
+ *                 enum: [low, medium, high, urgent]
+ *                 example: "high"
+ *               source:
+ *                 type: string
+ *                 example: "whatsapp"
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["automação", "whatsapp"]
+ *               contact_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID de contato existente (opcional)
+ *               custom_fields:
+ *                 type: object
+ *                 description: Campos personalizados
+ *     responses:
+ *       201:
+ *         description: Lead criado com sucesso
+ *       400:
+ *         description: Dados inválidos
+ *
+ * /api/leads/{id}:
+ *   get:
+ *     summary: Buscar Lead Específico
+ *     description: Retorna dados detalhados de um lead específico incluindo relações
+ *     tags:
+ *       - 🎯 Leads Management
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID do lead
+ *     responses:
+ *       200:
+ *         description: Lead encontrado
+ *       404:
+ *         description: Lead não encontrado
+ *   put:
+ *     summary: Atualizar Lead
+ *     description: Atualiza dados de um lead existente
+ *     tags:
+ *       - 🎯 Leads Management
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               company:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               estimated_value:
+ *                 type: number
+ *               status:
+ *                 type: string
+ *                 enum: [open, contacted, qualified, proposal, negotiation, won, lost, invalid]
+ *               priority:
+ *                 type: string
+ *                 enum: [low, medium, high, urgent]
+ *               source:
+ *                 type: string
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: Lead atualizado com sucesso
+ *       404:
+ *         description: Lead não encontrado
+ *   delete:
+ *     summary: Deletar Lead
+ *     description: Remove um lead do sistema (soft delete)
+ *     tags:
+ *       - 🎯 Leads Management
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Lead deletado com sucesso
+ *       404:
+ *         description: Lead não encontrado
+ *
+ * /api/leads/{id}/move:
+ *   post:
+ *     summary: Mover Lead Entre Colunas
+ *     description: Move um lead para uma coluna específica de um pipeline
+ *     tags:
+ *       - 🎯 Leads Management
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - column_id
+ *             properties:
+ *               column_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID da coluna de destino
+ *               pipeline_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID do pipeline (opcional, será derivado da coluna)
+ *               position:
+ *                 type: integer
+ *                 description: Posição na coluna (opcional)
+ *     responses:
+ *       200:
+ *         description: Lead movido com sucesso
+ *       404:
+ *         description: Lead ou coluna não encontrada
+ *
+ * /api/leads/column/{column_id}:
+ *   get:
+ *     summary: Listar Leads de uma Coluna
+ *     description: Lista todos os leads de uma coluna específica
+ *     tags:
+ *       - 🎯 Leads Management
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: column_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Lista de leads da coluna
+ *       404:
+ *         description: Coluna não encontrada
+ */
+
+/**
+ * @swagger
+ * /api/pipelines:
+ *   get:
+ *     summary: Listar Pipelines
+ *     description: Lista todos os pipelines da empresa com suas colunas
+ *     tags:
+ *       - 📊 Pipelines Management
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de pipelines retornada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       name:
+ *                         type: string
+ *                         example: "Pipeline de Vendas"
+ *                       description:
+ *                         type: string
+ *                       is_default:
+ *                         type: boolean
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                       columns:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                               format: uuid
+ *                             title:
+ *                               type: string
+ *                               example: "Novos Leads"
+ *                             color:
+ *                               type: string
+ *                               example: "#3b82f6"
+ *                             position:
+ *                               type: integer
+ *
+ * /api/pipelines/{id}:
+ *   get:
+ *     summary: Buscar Pipeline Específico
+ *     description: Retorna dados detalhados de um pipeline específico
+ *     tags:
+ *       - 📊 Pipelines Management
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Pipeline encontrado
+ *       404:
+ *         description: Pipeline não encontrado
+ *
+ * /api/pipelines/default/info:
+ *   get:
+ *     summary: Buscar Pipeline Padrão
+ *     description: Retorna informações do pipeline padrão da empresa
+ *     tags:
+ *       - 📊 Pipelines Management
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Pipeline padrão encontrado
+ *       404:
+ *         description: Pipeline padrão não encontrado
+ *
+ * /api/pipelines/{id}/columns:
+ *   get:
+ *     summary: Listar Colunas de um Pipeline
+ *     description: Lista todas as colunas de um pipeline específico ordenadas por posição
+ *     tags:
+ *       - 📊 Pipelines Management
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Lista de colunas do pipeline
+ *       404:
+ *         description: Pipeline não encontrado
+ *
+ * /api/pipelines/columns/all:
+ *   get:
+ *     summary: Listar Todas as Colunas
+ *     description: Lista todas as colunas de todos os pipelines agrupadas por pipeline
+ *     tags:
+ *       - 📊 Pipelines Management
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de todas as colunas agrupadas por pipeline
+ *
+ * /api/pipelines/{id}/stats:
+ *   get:
+ *     summary: Estatísticas do Pipeline
+ *     description: Retorna estatísticas detalhadas do pipeline incluindo contagem de leads e valores por coluna
+ *     tags:
+ *       - 📊 Pipelines Management
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Estatísticas do pipeline
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     pipeline:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         total_leads:
+ *                           type: integer
+ *                         total_value:
+ *                           type: number
+ *                     columns:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           column_id:
+ *                             type: string
+ *                           title:
+ *                             type: string
+ *                           lead_count:
+ *                             type: integer
+ *                           total_value:
+ *                             type: number
+ *       404:
+ *         description: Pipeline não encontrado
+ */
+
+/**
+ * @swagger
+ * /api/columns:
+ *   get:
+ *     summary: Listar Colunas
+ *     description: Lista todas as colunas da empresa com informações do pipeline
+ *     tags:
+ *       - 📋 Columns Management
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de colunas retornada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       title:
+ *                         type: string
+ *                         example: "Novos Leads"
+ *                       description:
+ *                         type: string
+ *                       color:
+ *                         type: string
+ *                         example: "#3b82f6"
+ *                       position:
+ *                         type: integer
+ *                       pipeline_id:
+ *                         type: string
+ *                         format: uuid
+ *                       pipeline_name:
+ *                         type: string
+ *                         example: "Pipeline de Vendas"
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *
+ * /api/columns/{id}:
+ *   get:
+ *     summary: Buscar Coluna Específica
+ *     description: Retorna dados detalhados de uma coluna específica
+ *     tags:
+ *       - 📋 Columns Management
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Coluna encontrada
+ *       404:
+ *         description: Coluna não encontrada
+ *
+ * /api/columns/{id}/leads:
+ *   get:
+ *     summary: Listar Leads de uma Coluna
+ *     description: Lista todos os leads de uma coluna específica ordenados por posição
+ *     tags:
+ *       - 📋 Columns Management
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Lista de leads da coluna
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     column:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         title:
+ *                           type: string
+ *                         color:
+ *                           type: string
+ *                     leads:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           title:
+ *                             type: string
+ *                           company:
+ *                             type: string
+ *                           estimated_value:
+ *                             type: number
+ *                           priority:
+ *                             type: string
+ *                           position:
+ *                             type: integer
+ *       404:
+ *         description: Coluna não encontrada
+ */
+
 app.listen(port, () => {
   console.log('');
   console.log('⚡ ═══════════════════════════════════════════════');
@@ -1553,10 +2209,11 @@ app.listen(port, () => {
   console.log(`💚 Health Check: http://localhost:${port}/health`);
   console.log('');
   console.log(`🎨 Interface: Scalar API Reference (Clean Design)`);
-  console.log(`📊 Endpoints: 17 endpoints organizados`);
+  console.log(`📊 Endpoints: 30 endpoints organizados`);
   console.log(`🌐 Base URL: https://api.zionic.app`);
   console.log(`🖼️ Logo: Zionic oficial integrado`);
-  console.log(`📱 Sidebar: Mensagens + Agent Control (organizado)`);
+  console.log(`📱 Sidebar: Mensagens + Agent Control + CRM (organizado)`);
+  console.log(`🎯 Novos: Leads, Pipelines e Columns Management (v3.2)`);
   console.log(`✨ Status: Design clean, detalhado e moderno`);
   console.log('');
   console.log('⚡ ═══════════════════════════════════════════════');
