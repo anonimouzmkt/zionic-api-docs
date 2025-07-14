@@ -16,7 +16,7 @@ const swaggerOptions = {
     openapi: '3.0.3',
     info: {
       title: '🚀 Zionic API',
-      version: '3.2.0',
+      version: '3.3.0',
       description: `
 # API Zionic - WhatsApp Business Integração
 
@@ -75,6 +75,13 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Listar colunas - \`GET /api/columns\`
 - Buscar coluna específica - \`GET /api/columns/:id\`
 - Listar leads de uma coluna - \`GET /api/columns/:id/leads\`
+
+### **Gerenciamento de Agendamentos** 📅 **NOVO na v3.3**
+- Verificar disponibilidade - \`GET /api/calendar/availability/:date\`
+- Agendar horário - \`POST /api/calendar/schedule\`
+- Listar agendamentos - \`GET /api/calendar/appointments\`
+- Atualizar agendamento - \`PUT /api/calendar/appointments/:id\`
+- Deletar agendamento - \`DELETE /api/calendar/appointments/:id\`
 
 ## 🔑 **Autenticação**
 
@@ -635,10 +642,10 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     service: 'Zionic API Documentation',
-    version: '3.2.0',
+    version: '3.3.0',
     timestamp: new Date().toISOString(),
     ui: 'Scalar API Reference',
-    endpoints: 30,
+    endpoints: 35,
     baseUrl: 'https://api.zionic.app'
   });
 });
@@ -2197,6 +2204,825 @@ app.get('/health', (req, res) => {
  *         description: Coluna não encontrada
  */
 
+/**
+ * @swagger
+ * /api/calendar/availability/{date}:
+ *   get:
+ *     summary: Verificar Disponibilidade
+ *     description: |
+ *       **📅 NOVO na v3.3** - Verifica a disponibilidade de horários para uma data específica.
+ *       
+ *       **Funcionalidades:**
+ *       - Retorna se o dia está completamente livre
+ *       - Lista horários ocupados com detalhes do agendamento
+ *       - Permite filtrar por horário de início e fim
+ *       - Integração automática com Google Calendar (se configurado)
+ *       
+ *       **Parâmetros de Consulta Opcionais:**
+ *       - `start_hour`: Horário de início para verificação (formato HH:MM)
+ *       - `end_hour`: Horário de fim para verificação (formato HH:MM)
+ *       - `include_details`: Se deve incluir detalhes dos agendamentos (true/false)
+ *     tags:
+ *       - 📅 Calendar Management (v3.3)
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Data para verificação de disponibilidade (formato YYYY-MM-DD)
+ *         example: "2024-01-15"
+ *       - in: query
+ *         name: start_hour
+ *         schema:
+ *           type: string
+ *           pattern: "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+ *         description: Horário de início para verificação (formato HH:MM)
+ *         example: "09:00"
+ *       - in: query
+ *         name: end_hour
+ *         schema:
+ *           type: string
+ *           pattern: "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+ *         description: Horário de fim para verificação (formato HH:MM)
+ *         example: "18:00"
+ *       - in: query
+ *         name: include_details
+ *         schema:
+ *           type: boolean
+ *           default: true
+ *         description: Se deve incluir detalhes dos agendamentos
+ *     responses:
+ *       200:
+ *         description: Disponibilidade verificada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     date:
+ *                       type: string
+ *                       format: date
+ *                       example: "2024-01-15"
+ *                     is_completely_free:
+ *                       type: boolean
+ *                       example: false
+ *                     period_checked:
+ *                       type: object
+ *                       properties:
+ *                         start_hour:
+ *                           type: string
+ *                           example: "09:00"
+ *                         end_hour:
+ *                           type: string
+ *                           example: "18:00"
+ *                     occupied_slots:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                             format: uuid
+ *                           title:
+ *                             type: string
+ *                             example: "Reunião com Cliente"
+ *                           start_time:
+ *                             type: string
+ *                             format: date-time
+ *                           end_time:
+ *                             type: string
+ *                             format: date-time
+ *                           status:
+ *                             type: string
+ *                             example: "confirmed"
+ *                           lead_info:
+ *                             type: object
+ *                             nullable: true
+ *                             properties:
+ *                               name:
+ *                                 type: string
+ *                               email:
+ *                                 type: string
+ *                     total_appointments:
+ *                       type: integer
+ *                       example: 3
+ *             examples:
+ *               completely_free:
+ *                 summary: Dia Completamente Livre
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     date: "2024-01-15"
+ *                     is_completely_free: true
+ *                     period_checked:
+ *                       start_hour: "09:00"
+ *                       end_hour: "18:00"
+ *                     occupied_slots: []
+ *                     total_appointments: 0
+ *               with_appointments:
+ *                 summary: Dia com Agendamentos
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     date: "2024-01-15"
+ *                     is_completely_free: false
+ *                     period_checked:
+ *                       start_hour: "09:00"
+ *                       end_hour: "18:00"
+ *                     occupied_slots:
+ *                       - id: "550e8400-e29b-41d4-a716-446655440000"
+ *                         title: "Reunião com Cliente ABC"
+ *                         start_time: "2024-01-15T10:00:00.000Z"
+ *                         end_time: "2024-01-15T11:00:00.000Z"
+ *                         status: "confirmed"
+ *                         lead_info:
+ *                           name: "João Silva"
+ *                           email: "joao@empresa.com"
+ *                     total_appointments: 1
+ *       400:
+ *         description: Data inválida ou parâmetros incorretos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Formato de data inválido. Use YYYY-MM-DD"
+ *       401:
+ *         description: Token de autenticação inválido
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+/**
+ * @swagger
+ * /api/calendar/schedule:
+ *   post:
+ *     summary: Agendar Horário
+ *     description: |
+ *       **📅 NOVO na v3.3** - Cria um novo agendamento com validações automáticas e integração opcional com Google Calendar.
+ *       
+ *       **Funcionalidades:**
+ *       - Validação automática de conflitos de horário
+ *       - Integração opcional com leads existentes
+ *       - Criação automática de Google Meet (se integração ativa)
+ *       - Sincronização bidirecional com Google Calendar
+ *       - Validações de horário de negócios
+ *       - Suporte a agendamentos recorrentes (futuro)
+ *       
+ *       **Regras de Negócio:**
+ *       - Não permite agendamentos em conflito
+ *       - Data/hora deve ser no futuro
+ *       - Duração mínima de 15 minutos
+ *       - Máximo de 8 horas por agendamento
+ *     tags:
+ *       - 📅 Calendar Management (v3.3)
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - start_time
+ *               - end_time
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: Título do agendamento
+ *                 example: "Reunião com Cliente ABC"
+ *                 maxLength: 255
+ *               description:
+ *                 type: string
+ *                 description: Descrição detalhada do agendamento
+ *                 example: "Apresentação da proposta comercial"
+ *               start_time:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Data e hora de início (ISO 8601)
+ *                 example: "2024-01-15T10:00:00.000Z"
+ *               end_time:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Data e hora de fim (ISO 8601)
+ *                 example: "2024-01-15T11:00:00.000Z"
+ *               location:
+ *                 type: string
+ *                 description: Local do agendamento
+ *                 example: "Escritório Central - Sala 1"
+ *               lead_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID do lead associado (opcional)
+ *                 example: "550e8400-e29b-41d4-a716-446655440000"
+ *               attendees:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                       example: "João Silva"
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *                       example: "joao@empresa.com"
+ *                     phone:
+ *                       type: string
+ *                       example: "+5511999999999"
+ *                 description: Lista de participantes
+ *               priority:
+ *                 type: string
+ *                 enum: [low, medium, high, urgent]
+ *                 default: medium
+ *                 description: Prioridade do agendamento
+ *               status:
+ *                 type: string
+ *                 enum: [pending, confirmed, cancelled, completed]
+ *                 default: pending
+ *                 description: Status do agendamento
+ *               create_google_meet:
+ *                 type: boolean
+ *                 default: true
+ *                 description: Se deve criar Google Meet automaticamente
+ *               send_notifications:
+ *                 type: boolean
+ *                 default: true
+ *                 description: Se deve enviar notificações aos participantes
+ *           examples:
+ *             basic_appointment:
+ *               summary: Agendamento Básico
+ *               value:
+ *                 title: "Reunião com Cliente"
+ *                 description: "Apresentação da proposta comercial"
+ *                 start_time: "2024-01-15T10:00:00.000Z"
+ *                 end_time: "2024-01-15T11:00:00.000Z"
+ *                 location: "Escritório Central"
+ *                 priority: "high"
+ *             with_lead:
+ *               summary: Agendamento com Lead
+ *               value:
+ *                 title: "Reunião - Lead João Silva"
+ *                 start_time: "2024-01-15T14:00:00.000Z"
+ *                 end_time: "2024-01-15T15:30:00.000Z"
+ *                 lead_id: "550e8400-e29b-41d4-a716-446655440000"
+ *                 attendees:
+ *                   - name: "João Silva"
+ *                     email: "joao@empresa.com"
+ *                     phone: "+5511999999999"
+ *                 create_google_meet: true
+ *     responses:
+ *       201:
+ *         description: Agendamento criado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Agendamento criado com sucesso"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     appointment:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           format: uuid
+ *                         title:
+ *                           type: string
+ *                         start_time:
+ *                           type: string
+ *                           format: date-time
+ *                         end_time:
+ *                           type: string
+ *                           format: date-time
+ *                         status:
+ *                           type: string
+ *                         google_event_id:
+ *                           type: string
+ *                           nullable: true
+ *                         google_meet_link:
+ *                           type: string
+ *                           nullable: true
+ *                     google_calendar:
+ *                       type: object
+ *                       properties:
+ *                         synced:
+ *                           type: boolean
+ *                         event_id:
+ *                           type: string
+ *                         meet_link:
+ *                           type: string
+ *       400:
+ *         description: Dados inválidos ou conflito de horário
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Conflito de horário detectado"
+ *                 conflicts:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       appointment_id:
+ *                         type: string
+ *                       title:
+ *                         type: string
+ *                       start_time:
+ *                         type: string
+ *                       end_time:
+ *                         type: string
+ *       401:
+ *         description: Token de autenticação inválido
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+/**
+ * @swagger
+ * /api/calendar/appointments:
+ *   get:
+ *     summary: Listar Agendamentos
+ *     description: |
+ *       **📅 NOVO na v3.3** - Lista agendamentos com filtros avançados e paginação.
+ *       
+ *       **Filtros Disponíveis:**
+ *       - Por data (data específica, intervalo, mês)
+ *       - Por status (pending, confirmed, cancelled, completed)
+ *       - Por lead associado
+ *       - Por prioridade
+ *       - Busca por título/descrição
+ *       
+ *       **Ordenação:**
+ *       - Por data (mais próximos primeiro)
+ *       - Por prioridade
+ *       - Por status
+ *     tags:
+ *       - 📅 Calendar Management (v3.3)
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrar por data específica (YYYY-MM-DD)
+ *         example: "2024-01-15"
+ *       - in: query
+ *         name: start_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Data de início para intervalo (YYYY-MM-DD)
+ *         example: "2024-01-01"
+ *       - in: query
+ *         name: end_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Data de fim para intervalo (YYYY-MM-DD)
+ *         example: "2024-01-31"
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, confirmed, cancelled, completed]
+ *         description: Filtrar por status
+ *       - in: query
+ *         name: lead_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filtrar por lead específico
+ *       - in: query
+ *         name: priority
+ *         schema:
+ *           type: string
+ *           enum: [low, medium, high, urgent]
+ *         description: Filtrar por prioridade
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Buscar por título ou descrição
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Página para paginação
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *           maximum: 100
+ *         description: Limite de resultados por página
+ *       - in: query
+ *         name: order_by
+ *         schema:
+ *           type: string
+ *           enum: [start_time, priority, created_at]
+ *           default: start_time
+ *         description: Campo para ordenação
+ *       - in: query
+ *         name: order_direction
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
+ *         description: Direção da ordenação
+ *     responses:
+ *       200:
+ *         description: Lista de agendamentos retornada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     appointments:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                             format: uuid
+ *                           title:
+ *                             type: string
+ *                           description:
+ *                             type: string
+ *                           start_time:
+ *                             type: string
+ *                             format: date-time
+ *                           end_time:
+ *                             type: string
+ *                             format: date-time
+ *                           location:
+ *                             type: string
+ *                           status:
+ *                             type: string
+ *                           priority:
+ *                             type: string
+ *                           google_meet_link:
+ *                             type: string
+ *                             nullable: true
+ *                           lead_info:
+ *                             type: object
+ *                             nullable: true
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                               title:
+ *                                 type: string
+ *                               company:
+ *                                 type: string
+ *                           attendees:
+ *                             type: array
+ *                             items:
+ *                               type: object
+ *                           created_at:
+ *                             type: string
+ *                             format: date-time
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: integer
+ *                         page:
+ *                           type: integer
+ *                         limit:
+ *                           type: integer
+ *                         totalPages:
+ *                           type: integer
+ *                         hasNext:
+ *                           type: boolean
+ *                         hasPrev:
+ *                           type: boolean
+ *       400:
+ *         description: Parâmetros de filtro inválidos
+ *       401:
+ *         description: Token de autenticação inválido
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+/**
+ * @swagger
+ * /api/calendar/appointments/{id}:
+ *   put:
+ *     summary: Atualizar Agendamento
+ *     description: |
+ *       **📅 NOVO na v3.3** - Atualiza um agendamento existente com validações e sincronização automática.
+ *       
+ *       **Funcionalidades:**
+ *       - Validação de conflitos ao alterar horários
+ *       - Sincronização automática com Google Calendar
+ *       - Atualização automática de Google Meet
+ *       - Validações de permissão e integridade
+ *       - Histórico de alterações (auditoria)
+ *       
+ *       **Regras de Negócio:**
+ *       - Não permite conflitos com outros agendamentos
+ *       - Novos horários devem ser no futuro
+ *       - Apenas agendamentos não concluídos podem ser alterados
+ *       - Notificações automáticas aos participantes
+ *     tags:
+ *       - 📅 Calendar Management (v3.3)
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID do agendamento a ser atualizado
+ *         example: "550e8400-e29b-41d4-a716-446655440000"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: "Reunião com Cliente - Atualizada"
+ *               description:
+ *                 type: string
+ *                 example: "Revisão da proposta comercial"
+ *               start_time:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2024-01-15T11:00:00.000Z"
+ *               end_time:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2024-01-15T12:00:00.000Z"
+ *               location:
+ *                 type: string
+ *                 example: "Escritório Central - Sala 2"
+ *               status:
+ *                 type: string
+ *                 enum: [pending, confirmed, cancelled, completed]
+ *                 example: "confirmed"
+ *               priority:
+ *                 type: string
+ *                 enum: [low, medium, high, urgent]
+ *                 example: "high"
+ *               attendees:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     phone:
+ *                       type: string
+ *               lead_id:
+ *                 type: string
+ *                 format: uuid
+ *                 nullable: true
+ *                 description: ID do lead (pode ser alterado ou removido)
+ *           examples:
+ *             update_time:
+ *               summary: Alterar Horário
+ *               value:
+ *                 start_time: "2024-01-15T11:00:00.000Z"
+ *                 end_time: "2024-01-15T12:00:00.000Z"
+ *             update_status:
+ *               summary: Confirmar Agendamento
+ *               value:
+ *                 status: "confirmed"
+ *                 priority: "high"
+ *             full_update:
+ *               summary: Atualização Completa
+ *               value:
+ *                 title: "Reunião Final - Cliente ABC"
+ *                 description: "Assinatura do contrato"
+ *                 start_time: "2024-01-15T14:00:00.000Z"
+ *                 end_time: "2024-01-15T15:00:00.000Z"
+ *                 location: "Sala de Reuniões VIP"
+ *                 status: "confirmed"
+ *                 priority: "urgent"
+ *     responses:
+ *       200:
+ *         description: Agendamento atualizado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Agendamento atualizado com sucesso"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     appointment:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           format: uuid
+ *                         title:
+ *                           type: string
+ *                         start_time:
+ *                           type: string
+ *                           format: date-time
+ *                         end_time:
+ *                           type: string
+ *                           format: date-time
+ *                         status:
+ *                           type: string
+ *                         updated_at:
+ *                           type: string
+ *                           format: date-time
+ *                     changes:
+ *                       type: object
+ *                       description: Campos que foram alterados
+ *                     google_calendar:
+ *                       type: object
+ *                       properties:
+ *                         synced:
+ *                           type: boolean
+ *                         updated:
+ *                           type: boolean
+ *       400:
+ *         description: Dados inválidos ou conflito de horário
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Conflito de horário detectado"
+ *                 conflicts:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       404:
+ *         description: Agendamento não encontrado
+ *       401:
+ *         description: Token de autenticação inválido
+ *       500:
+ *         description: Erro interno do servidor
+ *   delete:
+ *     summary: Deletar Agendamento
+ *     description: |
+ *       **📅 NOVO na v3.3** - Remove um agendamento do sistema com sincronização automática.
+ *       
+ *       **Funcionalidades:**
+ *       - Remoção automática do Google Calendar
+ *       - Notificações aos participantes
+ *       - Soft delete com possibilidade de recuperação
+ *       - Atualização automática de atividades do lead
+ *       - Logs de auditoria completos
+ *       
+ *       **Regras de Negócio:**
+ *       - Apenas agendamentos futuros ou pendentes podem ser deletados
+ *       - Agendamentos concluídos são mantidos para histórico
+ *       - Notificação automática de cancelamento
+ *     tags:
+ *       - 📅 Calendar Management (v3.3)
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID do agendamento a ser deletado
+ *         example: "550e8400-e29b-41d4-a716-446655440000"
+ *       - in: query
+ *         name: reason
+ *         schema:
+ *           type: string
+ *         description: Motivo do cancelamento (opcional)
+ *         example: "Cliente solicitou reagendamento"
+ *       - in: query
+ *         name: notify_attendees
+ *         schema:
+ *           type: boolean
+ *           default: true
+ *         description: Se deve notificar os participantes
+ *     responses:
+ *       200:
+ *         description: Agendamento deletado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Agendamento cancelado com sucesso"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     appointment_id:
+ *                       type: string
+ *                       format: uuid
+ *                     title:
+ *                       type: string
+ *                     cancelled_at:
+ *                       type: string
+ *                       format: date-time
+ *                     reason:
+ *                       type: string
+ *                       nullable: true
+ *                     google_calendar:
+ *                       type: object
+ *                       properties:
+ *                         removed:
+ *                           type: boolean
+ *                         event_id:
+ *                           type: string
+ *                           nullable: true
+ *                     notifications:
+ *                       type: object
+ *                       properties:
+ *                         sent:
+ *                           type: boolean
+ *                         attendees_notified:
+ *                           type: integer
+ *       400:
+ *         description: Agendamento não pode ser deletado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Agendamentos concluídos não podem ser deletados"
+ *                 details:
+ *                   type: string
+ *                   example: "Use o status 'cancelled' para manter histórico"
+ *       404:
+ *         description: Agendamento não encontrado
+ *       401:
+ *         description: Token de autenticação inválido
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
 app.listen(port, () => {
   console.log('');
   console.log('⚡ ═══════════════════════════════════════════════');
@@ -2209,11 +3035,11 @@ app.listen(port, () => {
   console.log(`💚 Health Check: http://localhost:${port}/health`);
   console.log('');
   console.log(`🎨 Interface: Scalar API Reference (Clean Design)`);
-  console.log(`📊 Endpoints: 30 endpoints organizados`);
+  console.log(`📊 Endpoints: 35 endpoints organizados`);
   console.log(`🌐 Base URL: https://api.zionic.app`);
   console.log(`🖼️ Logo: Zionic oficial integrado`);
   console.log(`📱 Sidebar: Mensagens + Agent Control + CRM (organizado)`);
-  console.log(`🎯 Novos: Leads, Pipelines e Columns Management (v3.2)`);
+  console.log(`🎯 Novos: Leads, Pipelines, Columns e Calendar Management (v3.3)`);
   console.log(`✨ Status: Design clean, detalhado e moderno`);
   console.log('');
   console.log('⚡ ═══════════════════════════════════════════════');
