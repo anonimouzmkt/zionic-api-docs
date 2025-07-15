@@ -16,7 +16,7 @@ const swaggerOptions = {
     openapi: '3.0.3',
     info: {
       title: '🚀 Zionic API',
-      version: '3.4.0',
+      version: '3.4.1',
       description: `
 # API Zionic - WhatsApp Business Integração
 
@@ -76,12 +76,16 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Buscar coluna específica - \`GET /api/columns/:id\`
 - Listar leads de uma coluna - \`GET /api/columns/:id/leads\`
 
-### **Gerenciamento de Agendamentos** 📅 **NOVO na v3.3**
+### **Gerenciamento de Agendamentos** 📅 **ATUALIZADO na v3.4.1**
 - Verificar disponibilidade - \`GET /api/calendar/availability/:date\`
 - Agendar horário - \`POST /api/calendar/schedule\`
 - Listar agendamentos - \`GET /api/calendar/appointments\`
 - Atualizar agendamento - \`PUT /api/calendar/appointments/:id\`
 - Deletar agendamento - \`DELETE /api/calendar/appointments/:id\`
+- **🆕 v3.4.1**: Listar integrações Google Calendar - \`GET /api/calendar/integrations\`
+- **🆕 v3.4.1**: Status de múltiplas integrações - \`GET /api/calendar/integrations/status\`
+- **🆕 v3.4.1**: Suporte completo a múltiplas agendas Google Calendar
+- **🆕 v3.4.1**: Sincronização simultânea de várias integrações por empresa
 
 **⏰ TIMEZONE - Como Agendar no Horário Correto:**
 - A API usa automaticamente o timezone configurado na empresa/usuário
@@ -662,11 +666,17 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     service: 'Zionic API Documentation',
-    version: '3.4.0',
+    version: '3.4.1',
     timestamp: new Date().toISOString(),
     ui: 'Scalar API Reference',
-    endpoints: 35,
-    baseUrl: 'https://api.zionic.app'
+    endpoints: 37,
+    baseUrl: 'https://api.zionic.app',
+    new_features: [
+      'Multiple Google Calendar integrations per company',
+      'GET /api/calendar/integrations - List all calendar integrations',
+      'GET /api/calendar/integrations/status - Quick integration status check',
+      'Enhanced sync support for multiple calendars simultaneously'
+    ]
   });
 });
 
@@ -3205,6 +3215,309 @@ app.get('/health', (req, res) => {
  *                   example: "Use o status 'cancelled' para manter histórico"
  *       404:
  *         description: Agendamento não encontrado
+ *       401:
+ *         description: Token de autenticação inválido
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+/**
+ * @swagger
+ * /api/calendar/integrations:
+ *   get:
+ *     summary: 📊 Listar Integrações Google Calendar
+ *     description: |
+ *       **🆕 NOVO na v3.4** - Lista todas as integrações do Google Calendar da empresa com informações detalhadas.
+ *       
+ *       **Funcionalidades:**
+ *       - Lista todas as integrações (ativas e inativas)
+ *       - Mostra status de cada integração
+ *       - Informações do usuário associado a cada agenda
+ *       - Estatísticas resumidas de integrações
+ *       - Configurações de sincronização e timezone
+ *       
+ *       **Status Possíveis:**
+ *       - `connected`: Integração ativa e funcionando
+ *       - `disconnected`: Integração desconectada
+ *       - `error`: Erro na integração (token expirado, etc.)
+ *       
+ *       **Casos de Uso:**
+ *       - Gerenciar múltiplas agendas da empresa
+ *       - Verificar status de sincronização
+ *       - Identificar integrações com problemas
+ *       - Auditoria de conexões ativas
+ *     tags:
+ *       - 📅 Calendar Management (v3.4)
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de integrações retornada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "3 integração(ões) encontrada(s)"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     integrations:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                             format: uuid
+ *                             example: "550e8400-e29b-41d4-a716-446655440000"
+ *                           calendar_id:
+ *                             type: string
+ *                             example: "primary"
+ *                           calendar_name:
+ *                             type: string
+ *                             example: "Agenda Principal - João Silva"
+ *                           status:
+ *                             type: string
+ *                             enum: [connected, disconnected, error]
+ *                             example: "connected"
+ *                           is_active:
+ *                             type: boolean
+ *                             example: true
+ *                           timezone:
+ *                             type: string
+ *                             example: "America/Sao_Paulo"
+ *                           auto_create_meet:
+ *                             type: boolean
+ *                             example: true
+ *                           sync_enabled:
+ *                             type: boolean
+ *                             example: true
+ *                           user:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                                 format: uuid
+ *                               name:
+ *                                 type: string
+ *                                 example: "João Silva"
+ *                               email:
+ *                                 type: string
+ *                                 example: "joao@empresa.com"
+ *                           created_at:
+ *                             type: string
+ *                             format: date-time
+ *                           updated_at:
+ *                             type: string
+ *                             format: date-time
+ *                           last_sync_at:
+ *                             type: string
+ *                             format: date-time
+ *                             nullable: true
+ *                     summary:
+ *                       type: object
+ *                       properties:
+ *                         total_integrations:
+ *                           type: integer
+ *                           example: 3
+ *                         active_integrations:
+ *                           type: integer
+ *                           example: 2
+ *                         status_breakdown:
+ *                           type: object
+ *                           properties:
+ *                             connected:
+ *                               type: integer
+ *                               example: 2
+ *                             disconnected:
+ *                               type: integer
+ *                               example: 1
+ *                             error:
+ *                               type: integer
+ *                               example: 0
+ *                             inactive:
+ *                               type: integer
+ *                               example: 0
+ *                             total:
+ *                               type: integer
+ *                               example: 3
+ *             examples:
+ *               multiple_integrations:
+ *                 summary: Múltiplas Integrações
+ *                 value:
+ *                   success: true
+ *                   message: "3 integração(ões) encontrada(s)"
+ *                   data:
+ *                     integrations:
+ *                       - id: "550e8400-e29b-41d4-a716-446655440000"
+ *                         calendar_id: "primary"
+ *                         calendar_name: "Agenda Principal - João Silva"
+ *                         status: "connected"
+ *                         is_active: true
+ *                         timezone: "America/Sao_Paulo"
+ *                         auto_create_meet: true
+ *                         sync_enabled: true
+ *                         user:
+ *                           id: "user-123"
+ *                           name: "João Silva"
+ *                           email: "joao@empresa.com"
+ *                         created_at: "2024-01-01T10:00:00.000Z"
+ *                         updated_at: "2024-01-15T14:30:00.000Z"
+ *                         last_sync_at: "2024-01-15T14:25:00.000Z"
+ *                       - id: "660f9500-f3ac-51e5-b827-557766551111"
+ *                         calendar_id: "vendas@empresa.com"
+ *                         calendar_name: "Agenda de Vendas"
+ *                         status: "connected"
+ *                         is_active: true
+ *                         timezone: "America/Sao_Paulo"
+ *                         auto_create_meet: true
+ *                         sync_enabled: true
+ *                         user:
+ *                           id: "user-456"
+ *                           name: "Maria Santos"
+ *                           email: "maria@empresa.com"
+ *                         created_at: "2024-01-05T09:00:00.000Z"
+ *                         updated_at: "2024-01-15T14:30:00.000Z"
+ *                         last_sync_at: "2024-01-15T14:20:00.000Z"
+ *                     summary:
+ *                       total_integrations: 2
+ *                       active_integrations: 2
+ *                       status_breakdown:
+ *                         connected: 2
+ *                         disconnected: 0
+ *                         error: 0
+ *                         inactive: 0
+ *                         total: 2
+ *       401:
+ *         description: Token de autenticação inválido
+ *       500:
+ *         description: Erro interno do servidor
+ *
+ * /api/calendar/integrations/status:
+ *   get:
+ *     summary: 🔍 Status de Múltiplas Integrações
+ *     description: |
+ *       **🆕 NOVO na v3.4** - Verificação rápida do status das integrações Google Calendar.
+ *       
+ *       **Informações Retornadas:**
+ *       - Se há pelo menos uma integração ativa
+ *       - Quantidade total de integrações ativas
+ *       - Integração primária (primeira ativa)
+ *       - Resumo de todas as integrações
+ *       - Mensagens de erro se houver problemas
+ *       
+ *       **Endpoint Otimizado:**
+ *       - Resposta mais rápida que `/integrations`
+ *       - Ideal para verificações de status
+ *       - Usado internamente pelo sistema
+ *       - Perfeito para dashboards e validações
+ *     tags:
+ *       - 📅 Calendar Management (v3.4)
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Status verificado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     has_integration:
+ *                       type: boolean
+ *                       example: true
+ *                       description: Se há pelo menos uma integração ativa
+ *                     total_active:
+ *                       type: integer
+ *                       example: 3
+ *                       description: Número total de integrações ativas
+ *                     primary_calendar:
+ *                       type: string
+ *                       example: "Agenda Principal - João Silva"
+ *                       nullable: true
+ *                       description: Nome da agenda primária (primeira ativa)
+ *                     integrations_summary:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                             format: uuid
+ *                           calendar_name:
+ *                             type: string
+ *                           status:
+ *                             type: string
+ *                           user_id:
+ *                             type: string
+ *                             format: uuid
+ *                       description: Resumo básico de cada integração
+ *                     error:
+ *                       type: string
+ *                       nullable: true
+ *                       example: null
+ *                       description: Mensagem de erro se houver problemas
+ *                     timezone:
+ *                       type: string
+ *                       example: "America/Sao_Paulo"
+ *                       description: Timezone da empresa
+ *                     company:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           format: uuid
+ *                         name:
+ *                           type: string
+ *             examples:
+ *               active_integrations:
+ *                 summary: Integrações Ativas
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     has_integration: true
+ *                     total_active: 2
+ *                     primary_calendar: "Agenda Principal - João Silva"
+ *                     integrations_summary:
+ *                       - id: "550e8400-e29b-41d4-a716-446655440000"
+ *                         calendar_name: "Agenda Principal - João Silva"
+ *                         status: "connected"
+ *                         user_id: "user-123"
+ *                       - id: "660f9500-f3ac-51e5-b827-557766551111"
+ *                         calendar_name: "Agenda de Vendas"
+ *                         status: "connected"
+ *                         user_id: "user-456"
+ *                     error: null
+ *                     timezone: "America/Sao_Paulo"
+ *                     company:
+ *                       id: "company-789"
+ *                       name: "Empresa ABC"
+ *               no_integrations:
+ *                 summary: Sem Integrações
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     has_integration: false
+ *                     total_active: 0
+ *                     primary_calendar: null
+ *                     integrations_summary: []
+ *                     error: "Nenhuma integração ativa do Google Calendar encontrada"
+ *                     timezone: "America/Sao_Paulo"
+ *                     company:
+ *                       id: "company-789"
+ *                       name: "Empresa ABC"
  *       401:
  *         description: Token de autenticação inválido
  *       500:
