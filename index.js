@@ -89,6 +89,13 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Para agendar às 10h no horário local, envie: \`"2024-01-15T10:00:00"\`
 - A API converte automaticamente considerando seu timezone
 - Formatos aceitos: ISO 8601 com ou sem timezone explícito
+- **TODOS os endpoints de calendário respeitam e retornam o timezone configurado**
+- **GET /availability/:date** - Considera horários no timezone correto
+- **POST /schedule** - Cria agendamentos considerando timezone da empresa
+- **GET /appointments** - Filtra datas no timezone correto  
+- **PUT /appointments/:id** - Atualiza considerando timezone
+- **DELETE /appointments/:id** - Remove considerando timezone
+- **Resposta JSON sempre inclui campo "timezone" para confirmação**
 
 ### **Mensagens de Custom Agents** 🤖 **NOVO na v3.4**
 - Marcação visual diferenciada - parâmetro \`sent_via_agent\`
