@@ -83,6 +83,13 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Atualizar agendamento - \`PUT /api/calendar/appointments/:id\`
 - Deletar agendamento - \`DELETE /api/calendar/appointments/:id\`
 
+**⏰ TIMEZONE - Como Agendar no Horário Correto:**
+- A API usa automaticamente o timezone configurado na empresa/usuário
+- Se não configurado, usa timezone padrão do Brasil (America/Sao_Paulo - GMT-3)
+- Para agendar às 10h no horário local, envie: \`"2024-01-15T10:00:00"\`
+- A API converte automaticamente considerando seu timezone
+- Formatos aceitos: ISO 8601 com ou sem timezone explícito
+
 ### **Mensagens de Custom Agents** 🤖 **NOVO na v3.4**
 - Marcação visual diferenciada - parâmetro \`sent_via_agent\`
 - Identificação automática de mensagens via webhooks/automações
