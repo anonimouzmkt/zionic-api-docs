@@ -16,7 +16,7 @@ const swaggerOptions = {
     openapi: '3.0.3',
     info: {
       title: '🚀 Zionic API',
-      version: '3.4.1',
+      version: '3.4.2',
       description: `
 # API Zionic - WhatsApp Business Integração
 
@@ -39,6 +39,7 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 ### **Mensagens via Conversation**
 - Envio de texto - \`POST /api/conversation/send-text\`
 - Envio de imagem via URL - \`POST /api/conversation/send-image\`
+- **🆕 v3.4.1** Envio de imagem via base64 - \`POST /api/conversation/send-image-base64\`
 - Envio de áudio via URL - \`POST /api/conversation/send-audio\`
 - Envio de vídeo via URL - \`POST /api/conversation/send-video\`
 - Envio de documento via URL - \`POST /api/conversation/send-document\`
@@ -82,6 +83,7 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Listar agendamentos - \`GET /api/calendar/appointments\`
 - Atualizar agendamento - \`PUT /api/calendar/appointments/:id\`
 - Deletar agendamento - \`DELETE /api/calendar/appointments/:id\`
+- **🆕 v3.4.2**: Envio de imagem via base64 - \`POST /api/conversation/send-image-base64\`
 - **🆕 v3.4.1**: Listar integrações Google Calendar - \`GET /api/calendar/integrations\`
 - **🆕 v3.4.1**: Status de múltiplas integrações - \`GET /api/calendar/integrations/status\`
 - **🆕 v3.4.1**: Suporte completo a múltiplas agendas Google Calendar
@@ -669,9 +671,10 @@ app.get('/health', (req, res) => {
     version: '3.4.1',
     timestamp: new Date().toISOString(),
     ui: 'Scalar API Reference',
-    endpoints: 37,
+    endpoints: 38,
     baseUrl: 'https://api.zionic.app',
     new_features: [
+      '🆕 v3.4.2: POST /api/conversation/send-image-base64 - Envio de imagem via base64',
       'Multiple Google Calendar integrations per company',
       'GET /api/calendar/integrations - List all calendar integrations',
       'GET /api/calendar/integrations/status - Quick integration status check',
@@ -1182,6 +1185,269 @@ app.get('/health', (req, res) => {
  *         description: Imagem enviada com sucesso
  *       404:
  *         description: Conversa não encontrada
+ */
+
+/**
+ * @swagger
+ * /api/conversation/send-image-base64:
+ *   post:
+ *     summary: 📸 Enviar Imagem via Base64
+ *     description: |
+ *       **🆕 NOVO na v3.4.1** - Envia uma imagem através de string base64 diretamente para uma conversa.
+ *       
+ *       **Funcionalidades:**
+ *       - Envio direto sem necessidade de URL pública
+ *       - Suporte a todos os formatos de imagem (JPG, PNG, GIF, WebP)
+ *       - Conversão automática para formato WhatsApp
+ *       - Validação de tamanho e formato
+ *       - Caption opcional para a imagem
+ *       - Controle de delay personalizado
+ *       - Marcação para custom agents
+ *       
+ *       **Vantagens:**
+ *       - Não precisa hospedar arquivo em servidor
+ *       - Envio imediato sem upload
+ *       - Segurança: dados não passam por URLs públicas
+ *       - Ideal para integrações N8N e webhooks
+ *       
+ *       **Limitações:**
+ *       - Tamanho máximo: 5MB (base64)
+ *       - Formatos aceitos: JPG, PNG, GIF, WebP
+ *       - Base64 deve incluir o prefixo data: (data:image/jpeg;base64,...)
+ *     tags:
+ *       - 💬 Mensagens via Conversation
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - conversation_id
+ *               - image_base64
+ *             properties:
+ *               conversation_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID único da conversa
+ *                 example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *               image_base64:
+ *                 type: string
+ *                 description: |
+ *                   String base64 da imagem com prefixo data:.
+ *                   
+ *                   **Formato obrigatório:**
+ *                   - Deve incluir o prefixo: `data:image/jpeg;base64,` ou similar
+ *                   - Formatos aceitos: jpeg, jpg, png, gif, webp
+ *                   - Tamanho máximo: 5MB
+ *                 example: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD..."
+ *                 pattern: "^data:image\\/(jpeg|jpg|png|gif|webp);base64,[A-Za-z0-9+/]+=*$"
+ *               caption:
+ *                 type: string
+ *                 description: Legenda opcional da imagem
+ *                 example: "Imagem enviada via API"
+ *                 maxLength: 1000
+ *               filename:
+ *                 type: string
+ *                 description: Nome do arquivo (opcional, padrão: image.jpg)
+ *                 example: "minha-imagem.jpg"
+ *                 default: "image.jpg"
+ *               delay:
+ *                 type: integer
+ *                 description: Delay em milissegundos antes do envio
+ *                 example: 1200
+ *                 minimum: 0
+ *                 maximum: 30000
+ *                 default: 1200
+ *               sent_via_agent:
+ *                 type: boolean
+ *                 description: |
+ *                   **✨ NOVO na v3.4** - Marca a imagem como enviada via custom agent.
+ *                   
+ *                   Quando `true`, aparece com visual diferenciado no chat:
+ *                   - Badge roxo "Enviado via Custom Agent"
+ *                   - Ícone especial para mídia
+ *                   - Background diferenciado
+ *                 example: false
+ *                 default: false
+ *           examples:
+ *             basic_image:
+ *               summary: Imagem Simples
+ *               value:
+ *                 conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                 image_base64: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj..."
+ *                 caption: "Minha imagem"
+ *                 filename: "teste.jpg"
+ *             custom_agent_image:
+ *               summary: Imagem via Custom Agent
+ *               description: Imagem enviada por automação/webhook
+ *               value:
+ *                 conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                 image_base64: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+ *                 caption: "Imagem processada automaticamente pelo sistema"
+ *                 sent_via_agent: true
+ *             n8n_webhook_image:
+ *               summary: Webhook N8N
+ *               description: Exemplo de imagem enviada via N8N
+ *               value:
+ *                 conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                 image_base64: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD..."
+ *                 caption: "Relatório gerado automaticamente"
+ *                 filename: "relatorio.jpg"
+ *                 sent_via_agent: true
+ *                 delay: 2000
+ *     responses:
+ *       200:
+ *         description: Imagem enviada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Imagem base64 enviada com sucesso"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message_id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: ID da mensagem salva no banco
+ *                     conversation_id:
+ *                       type: string
+ *                       format: uuid
+ *                     filename:
+ *                       type: string
+ *                       example: "image.jpg"
+ *                     caption:
+ *                       type: string
+ *                       nullable: true
+ *                     sent_via_agent:
+ *                       type: boolean
+ *                     image_size:
+ *                       type: object
+ *                       properties:
+ *                         original_bytes:
+ *                           type: integer
+ *                           description: Tamanho original em bytes
+ *                         base64_length:
+ *                           type: integer
+ *                           description: Tamanho da string base64
+ *                     whatsapp_id:
+ *                       type: string
+ *                       description: ID da mensagem no WhatsApp
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *             examples:
+ *               normal_response:
+ *                 summary: Imagem Normal Enviada
+ *                 value:
+ *                   success: true
+ *                   message: "Imagem base64 enviada com sucesso"
+ *                   data:
+ *                     message_id: "550e8400-e29b-41d4-a716-446655440000"
+ *                     conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                     filename: "minha-imagem.jpg"
+ *                     caption: "Minha imagem"
+ *                     sent_via_agent: false
+ *                     image_size:
+ *                       original_bytes: 45678
+ *                       base64_length: 60904
+ *                     whatsapp_id: "3EB0C9CB8A3A4E7F9D2A"
+ *                     timestamp: "2024-01-15T10:30:00.000Z"
+ *               custom_agent_response:
+ *                 summary: Custom Agent Response
+ *                 value:
+ *                   success: true
+ *                   message: "Imagem via custom agent enviada com sucesso"
+ *                   data:
+ *                     message_id: "660f9500-f3ac-51e5-b827-557766551111"
+ *                     conversation_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *                     filename: "relatorio.jpg"
+ *                     caption: "Relatório gerado automaticamente"
+ *                     sent_via_agent: true
+ *                     image_size:
+ *                       original_bytes: 123456
+ *                       base64_length: 164608
+ *                     whatsapp_id: "4FC1D2DC9B4B5F8A0E3B"
+ *                     timestamp: "2024-01-15T10:32:00.000Z"
+ *       400:
+ *         description: Dados inválidos ou imagem muito grande
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Parâmetros obrigatórios: conversation_id, image_base64"
+ *                 validation_errors:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["Base64 deve incluir prefixo data:image/", "Tamanho máximo: 5MB"]
+ *                 example:
+ *                   type: object
+ *                   properties:
+ *                     conversation_id:
+ *                       type: string
+ *                       example: "uuid-da-conversa"
+ *                     image_base64:
+ *                       type: string
+ *                       example: "data:image/jpeg;base64,/9j/4AAQ..."
+ *                     caption:
+ *                       type: string
+ *                       example: "Legenda da imagem"
+ *                     filename:
+ *                       type: string
+ *                       example: "imagem.jpg"
+ *       404:
+ *         description: Conversa não encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Conversa não encontrada"
+ *       413:
+ *         description: Imagem muito grande
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Imagem muito grande. Tamanho máximo: 5MB"
+ *                 details:
+ *                   type: object
+ *                   properties:
+ *                     received_size:
+ *                       type: string
+ *                       example: "7.2MB"
+ *                     max_size:
+ *                       type: string
+ *                       example: "5MB"
+ *       500:
+ *         description: Erro interno do servidor
  */
 
 /**
@@ -3536,12 +3802,13 @@ app.listen(port, () => {
   console.log(`💚 Health Check: http://localhost:${port}/health`);
   console.log('');
   console.log(`🎨 Interface: Scalar API Reference (Clean Design)`);
-  console.log(`📊 Endpoints: 35 endpoints organizados`);
+  console.log(`📊 Endpoints: 38 endpoints organizados`);
   console.log(`🌐 Base URL: https://api.zionic.app`);
   console.log(`🖼️ Logo: Zionic oficial integrado`);
   console.log(`📱 Sidebar: Mensagens + Agent Control + CRM (organizado)`);
   console.log(`🎯 Novos: Leads, Pipelines, Columns e Calendar Management (v3.3)`);
   console.log(`🤖 v3.4: Custom Agent Messages com visual diferenciado`);
+  console.log(`📸 v3.4.2: Envio de imagem via base64 direto`);
   console.log(`✨ Status: Design clean, detalhado e moderno`);
   console.log('');
   console.log('⚡ ═══════════════════════════════════════════════');
