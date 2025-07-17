@@ -16,7 +16,7 @@ const swaggerOptions = {
     openapi: '3.0.3',
     info: {
       title: '🚀 Zionic API',
-      version: '3.4.2',
+      version: '3.4.3',
       description: `
 # API Zionic - WhatsApp Business Integração
 
@@ -102,7 +102,7 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - **DELETE /appointments/:id** - Remove considerando timezone
 - **Resposta JSON sempre inclui campo "timezone" para confirmação**
 
-### **Mensagens de Custom Agents** 🤖 **ATUALIZADO na v3.4.2**
+### **Mensagens de Custom Agents** 🤖 **ATUALIZADO na v3.4.3**
 - **✨ NOVO:** Parâmetro \`sent_via_agent\` em **TODAS** as rotas de conversa
 - Marcação visual diferenciada para mensagens automáticas
 - Badge roxo "Enviado via Custom Agent" no chat  
@@ -668,12 +668,13 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     service: 'Zionic API Documentation',
-    version: '3.4.2',
+    version: '3.4.3',
     timestamp: new Date().toISOString(),
     ui: 'Scalar API Reference',
-    endpoints: 38,
+    endpoints: 39,
     baseUrl: 'https://api.zionic.app',
     new_features: [
+      '🆕 v3.4.3: Correção do sidebar - endpoint send-image-base64 agora visível',
       '🆕 v3.4.2: Parâmetro sent_via_agent em todas as rotas de conversa',
       '🆕 v3.4.2: POST /api/conversation/send-image-base64 - Envio de imagem via base64',
       '🆕 v3.4.2: Visual diferenciado para mensagens de custom agents',
