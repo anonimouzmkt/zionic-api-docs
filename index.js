@@ -83,7 +83,6 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Listar agendamentos - \`GET /api/calendar/appointments\`
 - Atualizar agendamento - \`PUT /api/calendar/appointments/:id\`
 - Deletar agendamento - \`DELETE /api/calendar/appointments/:id\`
-- **🆕 v3.4.2**: Envio de imagem via base64 - \`POST /api/conversation/send-image-base64\`
 - **🆕 v3.4.1**: Listar integrações Google Calendar - \`GET /api/calendar/integrations\`
 - **🆕 v3.4.1**: Status de múltiplas integrações - \`GET /api/calendar/integrations/status\`
 - **🆕 v3.4.1**: Suporte completo a múltiplas agendas Google Calendar
