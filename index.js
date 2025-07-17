@@ -603,7 +603,7 @@ function generateScalarHTML() {
   <script 
     id="api-reference" 
     type="application/json"
-    data-url="/api-spec.json"
+    data-url="/api-spec.json?v=3.4.3"
     data-configuration='${JSON.stringify({
       theme: 'none',
       showSidebar: true,
@@ -621,7 +621,7 @@ function generateScalarHTML() {
     document.addEventListener('DOMContentLoaded', function() {
       console.log('⚡ Zionic API Documentation carregada!');
       console.log('🎨 Design System: Zionic + Scalar');
-      console.log('📊 Endpoints: 16 endpoints documentados');
+      console.log('📊 Endpoints: 39 endpoints documentados');
       console.log('🌐 Base URL: https://api.zionic.app');
       
       // Adicionar logo personalizado após carregamento
@@ -4541,14 +4541,14 @@ app.listen(port, () => {
   console.log(`💚 Health Check: http://localhost:${port}/health`);
   console.log('');
   console.log(`🎨 Interface: Scalar API Reference (Clean Design)`);
-  console.log(`📊 Endpoints: 38 endpoints organizados`);
+  console.log(`📊 Endpoints: 39 endpoints organizados`);
   console.log(`🌐 Base URL: https://api.zionic.app`);
   console.log(`🖼️ Logo: Zionic oficial integrado`);
   console.log(`📱 Sidebar: Mensagens + Agent Control + CRM (organizado)`);
   console.log(`🎯 Novos: Leads, Pipelines, Columns e Calendar Management (v3.3)`);
   console.log(`🤖 v3.4: Custom Agent Messages com visual diferenciado`);
   console.log(`📸 v3.4.2: Envio de imagem via base64 direto`);
-  console.log(`⚙️ v3.4.2: Parâmetro sent_via_agent em TODAS as rotas`);
+  console.log(`⚙️ v3.4.3: Correção sidebar - send-image-base64 agora visível`);
   console.log(`✨ Status: Design clean, detalhado e moderno`);
   console.log('');
   console.log('⚡ ═══════════════════════════════════════════════');
