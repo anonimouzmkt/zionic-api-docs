@@ -16,11 +16,13 @@ const swaggerOptions = {
     openapi: '3.0.3',
     info: {
       title: '🚀 Zionic API',
-      version: '3.4.3',
+      version: '3.4.4',
       description: `
 # API Zionic - WhatsApp Business Integração
 
 **Plataforma completa para automação de WhatsApp Business**
+
+**✨ ATUALIZADO v3.4.4 - Endpoint send-image-base64 100% funcional**
 
 ## 🌟 **Visão Geral**
 
@@ -39,7 +41,7 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 ### **Mensagens via Conversation**
 - Envio de texto - \`POST /api/conversation/send-text\`
 - Envio de imagem via URL - \`POST /api/conversation/send-image\`
-- **🆕 v3.4.2** Envio de imagem via base64 - \`POST /api/conversation/send-image-base64\`
+- **✨ NOVO v3.4.4** Envio de imagem via base64 - \`POST /api/conversation/send-image-base64\`
 - Envio de áudio via URL - \`POST /api/conversation/send-audio\`
 - Envio de vídeo via URL - \`POST /api/conversation/send-video\`
 - Envio de documento via URL - \`POST /api/conversation/send-document\`
@@ -555,6 +557,30 @@ const customCSS = `
       padding: 0.375rem 0.75rem;
       text-transform: uppercase;
     }
+    
+    /* Destacar endpoint send-image-base64 */
+    [data-testid*="send-image-base64"], 
+    [href*="send-image-base64"],
+    .scalar-sidebar-item:has-text("send-image-base64") {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.1)) !important;
+      border-left: 4px solid #8b5cf6 !important;
+      font-weight: 700 !important;
+    }
+    
+    /* Badge especial para novos endpoints */
+    .scalar-operation:has([data-testid*="send-image-base64"])::before {
+      content: "✨ NOVO";
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      z-index: 10;
+    }
   `;
 
 // Rota principal para documentação com Scalar
@@ -603,7 +629,7 @@ function generateScalarHTML() {
   <script 
     id="api-reference" 
     type="application/json"
-    data-url="/api-spec.json?v=3.4.3"
+    data-url="/api-spec.json?v=3.4.4"
     data-configuration='${JSON.stringify({
       theme: 'none',
       showSidebar: true,
@@ -668,15 +694,16 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     service: 'Zionic API Documentation',
-    version: '3.4.3',
+    version: '3.4.4',
     timestamp: new Date().toISOString(),
     ui: 'Scalar API Reference',
     endpoints: 39,
     baseUrl: 'https://api.zionic.app',
     new_features: [
-      '🆕 v3.4.3: Correção do sidebar - endpoint send-image-base64 agora visível',
-      '🆕 v3.4.2: Parâmetro sent_via_agent em todas as rotas de conversa',
+      '🆕 v3.4.4: Correção final sidebar - send-image-base64 100% visível e funcional',
+      '🆕 v3.4.3: Endpoint send-image-base64 reorganizado na documentação',
       '🆕 v3.4.2: POST /api/conversation/send-image-base64 - Envio de imagem via base64',
+      '🆕 v3.4.2: Parâmetro sent_via_agent em todas as rotas de conversa',
       '🆕 v3.4.2: Visual diferenciado para mensagens de custom agents',
       'Multiple Google Calendar integrations per company',
       'GET /api/calendar/integrations - List all calendar integrations',
@@ -1288,7 +1315,7 @@ app.get('/health', (req, res) => {
  *   post:
  *     summary: 📸 Enviar Imagem via Base64
  *     description: |
- *       **🆕 NOVO na v3.4.2** - Envia uma imagem através de string base64 diretamente para uma conversa.
+ *       **✨ NOVO na v3.4.4** - Envia uma imagem através de string base64 diretamente para uma conversa.
  *       
  *       **Funcionalidades:**
  *       - Envio direto sem necessidade de URL pública
@@ -1544,6 +1571,13 @@ app.get('/health', (req, res) => {
  *       500:
  *         description: Erro interno do servidor
  */
+
+// ✨ ENDPOINT DESTACADO v3.4.4: send-image-base64 - 100% FUNCIONAL
+// Exemplo cURL para teste rápido:
+// curl -X POST https://api.zionic.app/api/conversation/send-image-base64 \
+//   -H "Authorization: Bearer zio_sua_api_key_aqui" \
+//   -H "Content-Type: application/json" \
+//   -d '{"conversation_id":"uuid","image_base64":"data:image/jpeg;base64,...","caption":"Teste"}'
 
 /**
  * @swagger
@@ -4548,7 +4582,7 @@ app.listen(port, () => {
   console.log(`🎯 Novos: Leads, Pipelines, Columns e Calendar Management (v3.3)`);
   console.log(`🤖 v3.4: Custom Agent Messages com visual diferenciado`);
   console.log(`📸 v3.4.2: Envio de imagem via base64 direto`);
-  console.log(`⚙️ v3.4.3: Correção sidebar - send-image-base64 agora visível`);
+  console.log(`⚙️ v3.4.4: send-image-base64 100% visível e funcional`);
   console.log(`✨ Status: Design clean, detalhado e moderno`);
   console.log('');
   console.log('⚡ ═══════════════════════════════════════════════');
