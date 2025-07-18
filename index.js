@@ -113,6 +113,34 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - **DELETE /appointments/:id** - Remove considerando timezone
 - **Resposta JSON sempre inclui campo "timezone" para confirmação**
 
+**📋 GUIA DE MIGRAÇÃO v3.4 → v3.5.0:**
+
+\`\`\`javascript
+// ❌ ANTES (v3.4)
+GET /api/calendar/availability/2024-01-15
+POST /api/calendar/schedule { "title": "Reunião" }
+
+// ✅ AGORA (v3.5.0) 
+// 1. Primeiro: Obter calendar_id
+GET /api/calendar/integrations
+
+// 2. Usar calendar_id nos endpoints
+GET /api/calendar/availability/2024-01-15?calendar_id=UUID
+POST /api/calendar/schedule { 
+  "title": "Reunião",
+  "calendar_id": "UUID"  // ← OBRIGATÓRIO
+}
+
+// 3. Resultado: Evento criado AUTOMATICAMENTE no Google Calendar!
+\`\`\`
+
+**🔄 BENEFÍCIOS DA ATUALIZAÇÃO:**
+- ✅ **Integração Automática**: Eventos criados instantaneamente no Google Calendar
+- ✅ **Múltiplas Agendas**: Uma empresa pode ter várias agendas simultâneas  
+- ✅ **Tokens Automáticos**: Renovação automática sem intervenção manual
+- ✅ **Google Meet**: Links gerados automaticamente para reuniões
+- ✅ **Sincronização Real**: Alterações refletidas imediatamente no Google
+
 ### **Mensagens de Custom Agents** 🤖 **ATUALIZADO na v3.4.3**
 - **✨ NOVO:** Parâmetro \`sent_via_agent\` em **TODAS** as rotas de conversa
 - Marcação visual diferenciada para mensagens automáticas
@@ -3456,13 +3484,18 @@ app.get('/health', (req, res) => {
  *   get:
  *     summary: Verificar Disponibilidade
  *     description: |
- *       **📅 NOVO na v3.3** - Verifica a disponibilidade de horários para uma data específica.
+ *       **📅 ATUALIZADO na v3.5.0** - Verifica a disponibilidade de horários para uma data específica em agenda específica.
+ *       
+ *       **✨ NOVA FUNCIONALIDADE v3.5.0:**
+ *       - **AGENDA ESPECÍFICA**: Verifica disponibilidade apenas na agenda selecionada
+ *       - **VALIDAÇÃO AUTOMÁTICA**: calendar_id obrigatório e validado automaticamente
+ *       - **MÚLTIPLAS AGENDAS**: Cada empresa pode ter várias agendas independentes
  *       
  *       **Funcionalidades:**
- *       - Retorna se o dia está completamente livre
+ *       - Retorna se o dia está completamente livre na agenda específica
  *       - Lista horários ocupados com detalhes do agendamento
  *       - Permite filtrar por horário de início e fim
- *       - Integração automática com Google Calendar (se configurado)
+ *       - Integração automática com agenda Google Calendar selecionada
  *       
  *       **Parâmetros de Consulta Opcionais:**
  *       - `start_hour`: Horário de início para verificação (formato HH:MM)
@@ -3628,15 +3661,21 @@ app.get('/health', (req, res) => {
  *   post:
  *     summary: Agendar Horário
  *     description: |
- *       **📅 NOVO na v3.3** - Cria um novo agendamento com validações automáticas e integração opcional com Google Calendar.
+ *       **📅 ATUALIZADO na v3.5.0** - Cria um novo agendamento com validações automáticas e integração AUTOMÁTICA com Google Calendar.
+ *       
+ *       **✨ NOVA FUNCIONALIDADE v3.5.0:**
+ *       - **INTEGRAÇÃO AUTOMÁTICA**: Evento criado instantaneamente no Google Calendar
+ *       - **REFRESH AUTOMÁTICO**: Renova tokens expirados automaticamente
+ *       - **MÚLTIPLAS AGENDAS**: Suporte a várias integrações por empresa
+ *       - **GOOGLE MEET**: Geração automática de links de reunião
  *       
  *       **Funcionalidades:**
  *       - Validação automática de conflitos de horário
- *       - Integração opcional com leads existentes
- *       - Criação automática de Google Meet (se integração ativa)
- *       - Sincronização bidirecional com Google Calendar
+ *       - Integração obrigatória com agenda específica (calendar_id)
+ *       - Criação automática de Google Meet (se habilitado na integração)
+ *       - Sincronização bidirecional em tempo real com Google Calendar
  *       - Validações de horário de negócios
- *       - Suporte a agendamentos recorrentes (futuro)
+ *       - Renovação automática de tokens OAuth
  *       
  *       **Regras de Negócio:**
  *       - Não permite agendamentos em conflito
@@ -3644,7 +3683,7 @@ app.get('/health', (req, res) => {
  *       - Duração mínima de 15 minutos
  *       - Máximo de 8 horas por agendamento
  *     tags:
- *       - 📅 Calendar Management (v3.3)
+ *       - 📅 Calendar Management (v3.5.0)
  *     security:
  *       - BearerAuth: []
  *     requestBody:
@@ -3752,7 +3791,7 @@ app.get('/health', (req, res) => {
  *                 create_google_meet: true
  *     responses:
  *       201:
- *         description: Agendamento criado com sucesso
+ *         description: Agendamento criado com sucesso (inclui criação automática no Google Calendar)
  *         content:
  *           application/json:
  *             schema:
@@ -3792,12 +3831,77 @@ app.get('/health', (req, res) => {
  *                     google_calendar:
  *                       type: object
  *                       properties:
- *                         synced:
- *                           type: boolean
- *                         event_id:
+ *                         integration_status:
  *                           type: string
- *                         meet_link:
+ *                           enum: [success, failed, partial_success, not_attempted]
+ *                           example: "success"
+ *                         message:
  *                           type: string
+ *                           example: "Evento criado com sucesso no Google Calendar"
+ *                         google_event_id:
+ *                           type: string
+ *                           nullable: true
+ *                           example: "google_event_456"
+ *                         google_meet_link:
+ *                           type: string
+ *                           nullable: true
+ *                           example: "https://meet.google.com/abc-defg-hij"
+ *                         calendar_info:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                               format: uuid
+ *                             name:
+ *                               type: string
+ *                               example: "Agenda Principal"
+ *                             calendar_id:
+ *                               type: string
+ *                               example: "primary"
+ *             examples:
+ *               success_with_meet:
+ *                 summary: ✅ Sucesso com Google Meet
+ *                 value:
+ *                   success: true
+ *                   message: "Agendamento criado com sucesso"
+ *                   appointment:
+ *                     id: "apt_123"
+ *                     title: "Reunião com Cliente"
+ *                     google_event_id: "google_event_456"
+ *                     google_meet_link: "https://meet.google.com/abc-defg-hij"
+ *                     calendar_integration_id: "550e8400-e29b-41d4-a716-446655440001"
+ *                   google_calendar:
+ *                     integration_status: "success"
+ *                     message: "Evento criado com sucesso no Google Calendar"
+ *                     google_event_id: "google_event_456"
+ *                     google_meet_link: "https://meet.google.com/abc-defg-hij"
+ *                     calendar_info:
+ *                       id: "550e8400-e29b-41d4-a716-446655440001"
+ *                       name: "Agenda Principal"
+ *                       calendar_id: "primary"
+ *               token_expired_auto_refresh:
+ *                 summary: 🔄 Token Renovado Automaticamente
+ *                 value:
+ *                   success: true
+ *                   message: "Agendamento criado com sucesso"
+ *                   appointment:
+ *                     id: "apt_124"
+ *                     google_event_id: "google_event_457"
+ *                   google_calendar:
+ *                     integration_status: "success"
+ *                     message: "Evento criado com sucesso no Google Calendar"
+ *                     token_refreshed: true
+ *               integration_failed:
+ *                 summary: ❌ Falha na Integração
+ *                 value:
+ *                   success: true
+ *                   message: "Agendamento criado com sucesso"
+ *                   appointment:
+ *                     id: "apt_125"
+ *                     google_event_id: null
+ *                   google_calendar:
+ *                     integration_status: "failed"
+ *                     message: "Erro ao criar no Google Calendar: Token expired and no refresh token"
  *       400:
  *         description: Dados inválidos ou conflito de horário
  *         content:
@@ -3836,7 +3940,7 @@ app.get('/health', (req, res) => {
  *   get:
  *     summary: Listar Agendamentos
  *     description: |
- *       **📅 NOVO na v3.3** - Lista agendamentos com filtros avançados e paginação.
+ *       **📅 ATUALIZADO na v3.5.0** - Lista agendamentos com filtros avançados, paginação e informações de agenda.
  *       
  *       **Filtros Disponíveis:**
  *       - Por data (data específica, intervalo, mês)
@@ -3850,7 +3954,7 @@ app.get('/health', (req, res) => {
  *       - Por prioridade
  *       - Por status
  *     tags:
- *       - 📅 Calendar Management (v3.3)
+ *       - 📅 Calendar Management (v3.5.0)
  *     security:
  *       - BearerAuth: []
  *     parameters:
@@ -3973,6 +4077,22 @@ app.get('/health', (req, res) => {
  *                           google_meet_link:
  *                             type: string
  *                             nullable: true
+ *                           calendar_info:
+ *                             type: object
+ *                             nullable: true
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                                 format: uuid
+ *                                 description: ID da integração de calendário
+ *                               name:
+ *                                 type: string
+ *                                 description: Nome da agenda
+ *                                 example: "Agenda Principal"
+ *                               calendar_id:
+ *                                 type: string
+ *                                 description: ID do calendário no Google
+ *                                 example: "primary"
  *                           lead_info:
  *                             type: object
  *                             nullable: true
@@ -4019,14 +4139,19 @@ app.get('/health', (req, res) => {
  *   put:
  *     summary: Atualizar Agendamento
  *     description: |
- *       **📅 NOVO na v3.3** - Atualiza um agendamento existente com validações e sincronização automática.
+ *       **📅 ATUALIZADO na v3.5.0** - Atualiza um agendamento existente com validações e sincronização automática com Google Calendar.
+ *       
+ *       **✨ NOVA FUNCIONALIDADE v3.5.0:**
+ *       - **ATUALIZAÇÃO AUTOMÁTICA**: Evento atualizado instantaneamente no Google Calendar
+ *       - **MÚLTIPLAS AGENDAS**: Permite mover agendamentos entre diferentes agendas
+ *       - **REFRESH AUTOMÁTICO**: Renova tokens expirados automaticamente
  *       
  *       **Funcionalidades:**
  *       - Validação de conflitos ao alterar horários
- *       - Sincronização automática com Google Calendar
+ *       - Sincronização automática em tempo real com Google Calendar
  *       - Atualização automática de Google Meet
  *       - Validações de permissão e integridade
- *       - Histórico de alterações (auditoria)
+ *       - Suporte a mudança entre agendas (calendar_id)
  *       
  *       **Regras de Negócio:**
  *       - Não permite conflitos com outros agendamentos
@@ -4034,7 +4159,7 @@ app.get('/health', (req, res) => {
  *       - Apenas agendamentos não concluídos podem ser alterados
  *       - Notificações automáticas aos participantes
  *     tags:
- *       - 📅 Calendar Management (v3.3)
+ *       - 📅 Calendar Management (v3.5.0)
  *     security:
  *       - BearerAuth: []
  *     parameters:
@@ -4206,7 +4331,7 @@ app.get('/health', (req, res) => {
  *       - Agendamentos concluídos são mantidos para histórico
  *       - Notificação automática de cancelamento
  *     tags:
- *       - 📅 Calendar Management (v3.3)
+ *       - 📅 Calendar Management (v3.5.0)
  *     security:
  *       - BearerAuth: []
  *     parameters:
@@ -4616,7 +4741,7 @@ app.listen(port, () => {
   console.log(`🌐 Base URL: https://api.zionic.app`);
   console.log(`🖼️ Logo: Zionic oficial integrado`);
   console.log(`📱 Sidebar: Mensagens + Agent Control + CRM (organizado)`);
-  console.log(`🎯 Novos: Leads, Pipelines, Columns e Calendar Management (v3.3)`);
+  console.log(`🎯 Novos: Leads, Pipelines, Columns e Calendar Management (v3.5.0 - INTEGRAÇÃO AUTOMÁTICA GOOGLE CALENDAR)`);
   console.log(`🤖 v3.4: Custom Agent Messages com visual diferenciado`);
   console.log(`📸 v3.4.2: Envio de imagem via base64 direto`);
   console.log(`⚙️ v3.4.4: send-image-base64 100% visível e funcional`);
