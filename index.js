@@ -16,13 +16,13 @@ const swaggerOptions = {
     openapi: '3.0.3',
     info: {
       title: '🚀 Zionic API',
-      version: '3.6.0',
+      version: '3.6.1',
       description: `
 # API Zionic - WhatsApp Business Integração
 
 **Plataforma completa para automação de WhatsApp Business**
 
-**✨ ATUALIZADO v3.6.0 - Formato ISO 8601 unificado nos endpoints de calendário**
+**✨ ATUALIZADO v3.6.1 - Sistema de anexos para leads**
 
 ## 🌟 **Visão Geral**
 
@@ -66,6 +66,11 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Mover lead entre colunas - \`POST /api/leads/:id/move\`
 - Listar leads de uma coluna - \`GET /api/leads/column/:column_id\`
 
+### **Anexos de Leads** 📎 **NOVO na v3.2**
+- Anexar documento via base64 - \`POST /api/leads/attachments/:leadId\`
+- Listar anexos do lead - \`GET /api/leads/attachments/:leadId\`
+- Deletar anexo - \`DELETE /api/leads/attachments/:leadId/:attachmentId\`
+
 ### **Gerenciamento de Pipelines** 📊 **NOVO na v3.2**
 - Listar pipelines - \`GET /api/pipelines\`
 - Buscar pipeline específico - \`GET /api/pipelines/:id\`
@@ -87,11 +92,22 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Deletar agendamento - \`DELETE /api/calendar/appointments/:id\`
 - Listar integrações Google Calendar - \`GET /api/calendar/integrations\`
 - Status de múltiplas integrações - \`GET /api/calendar/integrations/status\`
+- **🆕 v3.6.1**: Sistema completo de anexos para leads (upload base64, preview, categorização)
 - **🆕 v3.6.0**: Formato ISO 8601 unificado (ex: 2025-07-07T11:30:00)
 - **🆕 v3.6.0**: Simplificação de data/hora em parâmetro único
 - **🆕 v3.6.0**: Timezone automático da tabela users.timezone
 - **✅ v3.5.0**: Parâmetro \`calendar_id\` obrigatório para especificar qual agenda usar
 - **✅ v3.5.0**: Suporte a múltiplas agendas por empresa com especificação obrigatória
+
+**🆕 NOVO na v3.6.1 - SISTEMA DE ANEXOS PARA LEADS:**
+- **📎 Upload Base64**: Anexar documentos, imagens e arquivos diretamente via API
+- **📋 Categorização**: Organizar anexos por tipo (document, image, contract, proposal, other)
+- **🔍 Preview Frontend**: Visualização de PDFs, imagens e textos no modal do lead
+- **🗂️ Gestão Completa**: Listar, visualizar e deletar anexos via API e interface
+- **☁️ Storage Supabase**: Armazenamento seguro com URLs públicas automáticas
+- **🛡️ Segurança**: RLS policies e validação por empresa/usuário
+- **📊 Metadados**: Informações completas sobre upload, tamanho e tipo de arquivo
+- **💾 Soft Delete**: Histórico preservado com exclusão suave
 
 **⚠️ BREAKING CHANGES v3.6.0 - FORMATO UNIFICADO:**
 - **NOVO FORMATO**: Endpoints de calendário agora usam ISO 8601 unificado:
@@ -159,6 +175,40 @@ POST /api/calendar/schedule {
 - ✅ **Tokens Automáticos**: Renovação automática sem intervenção manual
 - ✅ **Google Meet**: Links gerados automaticamente para reuniões
 - ✅ **Sincronização Real**: Alterações refletidas imediatamente no Google
+
+**📎 GUIA DE USO - ANEXOS DE LEADS (v3.6.1):**
+
+\`\`\`javascript
+// 📎 1. ANEXAR DOCUMENTO VIA BASE64
+POST /api/leads/attachments/lead-uuid-aqui
+Headers: { "Authorization": "Bearer zio_sua_api_key" }
+Body: {
+  "file_base64": "JVBERi0xLjQKJcOkw7zDtsO8w65jcm9iYXQKNSAwIG9iago...",
+  "file_name": "proposta_comercial.pdf",
+  "file_type": "application/pdf",
+  "description": "Proposta comercial detalhada",
+  "category": "proposal"
+}
+
+// 📋 2. LISTAR ANEXOS DO LEAD
+GET /api/leads/attachments/lead-uuid-aqui
+Headers: { "Authorization": "Bearer zio_sua_api_key" }
+
+// 🗑️ 3. DELETAR ANEXO
+DELETE /api/leads/attachments/lead-uuid/attachment-uuid
+Headers: { "Authorization": "Bearer zio_sua_api_key" }
+
+// 🎯 CATEGORIAS DISPONÍVEIS:
+// - document: Documentos gerais
+// - image: Imagens e fotos  
+// - contract: Contratos assinados
+// - proposal: Propostas comerciais
+// - other: Outros tipos de arquivo
+
+// ✅ TIPOS DE ARQUIVO SUPORTADOS:
+// PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, CSV, JSON, XML
+// JPG, PNG, GIF, WEBP, SVG, ZIP, RAR (máximo 50MB)
+\`\`\`
 
 ### **Custom Agents - Mensagens e Agendamentos** 🤖 **ATUALIZADO na v3.5.1**
 - **✨ NOVO:** Parâmetro \`sent_via_agent\` em **TODAS** as rotas de conversa
@@ -3188,6 +3238,262 @@ app.get('/health', (req, res) => {
  *         description: Lista de leads da coluna
  *       404:
  *         description: Coluna não encontrada
+ */
+
+/**
+ * @swagger
+ * /api/leads/attachments/{leadId}:
+ *   post:
+ *     summary: Anexar Documento ao Lead
+ *     description: |
+ *       Anexa um documento ao lead via upload base64. Suporta diversos tipos de arquivo:
+ *       - **Documentos**: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX
+ *       - **Imagens**: JPG, PNG, GIF, WEBP, SVG
+ *       - **Texto**: TXT, CSV, JSON, XML
+ *       - **Outros**: ZIP, RAR
+ *       
+ *       **Limite**: Máximo 50MB por arquivo
+ *     tags:
+ *       - 📎 Lead Attachments
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: leadId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: UUID do lead que receberá o anexo
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file_base64
+ *               - file_name
+ *               - file_type
+ *             properties:
+ *               file_base64:
+ *                 type: string
+ *                 description: Arquivo codificado em base64
+ *                 example: "JVBERi0xLjQKJcOkw7zDtsO..."
+ *               file_name:
+ *                 type: string
+ *                 description: Nome do arquivo com extensão
+ *                 example: "proposta_comercial.pdf"
+ *               file_type:
+ *                 type: string
+ *                 description: MIME type do arquivo
+ *                 example: "application/pdf"
+ *               description:
+ *                 type: string
+ *                 description: Descrição opcional do anexo
+ *                 example: "Proposta comercial para o cliente"
+ *               category:
+ *                 type: string
+ *                 enum: [document, image, contract, proposal, other]
+ *                 default: document
+ *                 description: Categoria do anexo para organização
+ *     responses:
+ *       200:
+ *         description: Anexo adicionado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Anexo adicionado com sucesso ao lead"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     attachment_id:
+ *                       type: string
+ *                       format: uuid
+ *                     lead_id:
+ *                       type: string
+ *                       format: uuid
+ *                     lead_title:
+ *                       type: string
+ *                       example: "João Silva - Consulta"
+ *                     file_name:
+ *                       type: string
+ *                       example: "proposta_comercial.pdf"
+ *                     file_type:
+ *                       type: string
+ *                       example: "application/pdf"
+ *                     file_size:
+ *                       type: integer
+ *                       example: 524288
+ *                     file_size_formatted:
+ *                       type: string
+ *                       example: "512 KB"
+ *                     file_url:
+ *                       type: string
+ *                       format: uri
+ *                       example: "https://supabase.com/storage/v1/object/public/media/lead-attachments/..."
+ *                     category:
+ *                       type: string
+ *                       example: "proposal"
+ *                     description:
+ *                       type: string
+ *                       example: "Proposta comercial para o cliente"
+ *                     uploaded_at:
+ *                       type: string
+ *                       format: date-time
+ *                     uploaded_via:
+ *                       type: string
+ *                       example: "api"
+ *       400:
+ *         description: Erro de validação (arquivo muito grande, base64 inválido, etc.)
+ *       404:
+ *         description: Lead não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ *   get:
+ *     summary: Listar Anexos do Lead
+ *     description: Lista todos os anexos ativos de um lead específico
+ *     tags:
+ *       - 📎 Lead Attachments
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: leadId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: UUID do lead
+ *     responses:
+ *       200:
+ *         description: Lista de anexos retornada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     lead_id:
+ *                       type: string
+ *                       format: uuid
+ *                     lead_title:
+ *                       type: string
+ *                       example: "João Silva - Consulta"
+ *                     attachments_count:
+ *                       type: integer
+ *                       example: 3
+ *                     attachments:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           attachment_id:
+ *                             type: string
+ *                             format: uuid
+ *                           file_name:
+ *                             type: string
+ *                             example: "contrato.pdf"
+ *                           file_type:
+ *                             type: string
+ *                             example: "application/pdf"
+ *                           file_size:
+ *                             type: integer
+ *                             example: 1048576
+ *                           file_size_formatted:
+ *                             type: string
+ *                             example: "1 MB"
+ *                           file_url:
+ *                             type: string
+ *                             format: uri
+ *                           description:
+ *                             type: string
+ *                             example: "Contrato assinado"
+ *                           category:
+ *                             type: string
+ *                             example: "contract"
+ *                           uploaded_by_name:
+ *                             type: string
+ *                             example: "João Silva"
+ *                           uploaded_at:
+ *                             type: string
+ *                             format: date-time
+ *                           created_at:
+ *                             type: string
+ *                             format: date-time
+ *       404:
+ *         description: Lead não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ *
+ * /api/leads/attachments/{leadId}/{attachmentId}:
+ *   delete:
+ *     summary: Deletar Anexo do Lead
+ *     description: Remove um anexo específico de um lead (soft delete)
+ *     tags:
+ *       - 📎 Lead Attachments
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: leadId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: UUID do lead
+ *       - in: path
+ *         name: attachmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: UUID do anexo a ser removido
+ *     responses:
+ *       200:
+ *         description: Anexo removido com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Anexo removido com sucesso"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     attachment_id:
+ *                       type: string
+ *                       format: uuid
+ *                     lead_id:
+ *                       type: string
+ *                       format: uuid
+ *                     file_name:
+ *                       type: string
+ *                       example: "documento.pdf"
+ *                     deleted_at:
+ *                       type: string
+ *                       format: date-time
+ *       404:
+ *         description: Anexo ou lead não encontrado
+ *       500:
+ *         description: Erro interno do servidor
  */
 
 /**
