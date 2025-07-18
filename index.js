@@ -16,13 +16,13 @@ const swaggerOptions = {
     openapi: '3.0.3',
     info: {
       title: '🚀 Zionic API',
-      version: '3.4.4',
+      version: '3.5.0',
       description: `
 # API Zionic - WhatsApp Business Integração
 
 **Plataforma completa para automação de WhatsApp Business**
 
-**✨ ATUALIZADO v3.4.4 - Endpoint send-image-base64 100% funcional**
+**✨ ATUALIZADO v3.5.0 - Parâmetro calendar_id obrigatório nos endpoints de calendário**
 
 ## 🌟 **Visão Geral**
 
@@ -79,16 +79,25 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Buscar coluna específica - \`GET /api/columns/:id\`
 - Listar leads de uma coluna - \`GET /api/columns/:id/leads\`
 
-### **Gerenciamento de Agendamentos** 📅 **ATUALIZADO na v3.4.1**
-- Verificar disponibilidade - \`GET /api/calendar/availability/:date\`
-- Agendar horário - \`POST /api/calendar/schedule\`
-- Listar agendamentos - \`GET /api/calendar/appointments\`
-- Atualizar agendamento - \`PUT /api/calendar/appointments/:id\`
+### **Gerenciamento de Agendamentos** 📅 **BREAKING CHANGE na v3.5.0**
+- Verificar disponibilidade - \`GET /api/calendar/availability/:date\` **[calendar_id obrigatório]**
+- Agendar horário - \`POST /api/calendar/schedule\` **[calendar_id obrigatório no body]**
+- Listar agendamentos - \`GET /api/calendar/appointments\` **[calendar_id opcional como filtro]**
+- Atualizar agendamento - \`PUT /api/calendar/appointments/:id\` **[calendar_id opcional para mover agenda]**
 - Deletar agendamento - \`DELETE /api/calendar/appointments/:id\`
-- **🆕 v3.4.1**: Listar integrações Google Calendar - \`GET /api/calendar/integrations\`
-- **🆕 v3.4.1**: Status de múltiplas integrações - \`GET /api/calendar/integrations/status\`
-- **🆕 v3.4.1**: Suporte completo a múltiplas agendas Google Calendar
-- **🆕 v3.4.1**: Sincronização simultânea de várias integrações por empresa
+- Listar integrações Google Calendar - \`GET /api/calendar/integrations\`
+- Status de múltiplas integrações - \`GET /api/calendar/integrations/status\`
+- **🆕 v3.5.0**: Parâmetro \`calendar_id\` obrigatório para especificar qual agenda usar
+- **🆕 v3.5.0**: Suporte a múltiplas agendas por empresa com especificação obrigatória
+- **🆕 v3.5.0**: Validação automática de pertencimento da agenda à empresa
+
+**⚠️ BREAKING CHANGES v3.5.0 - CALENDÁRIO:**
+- **OBRIGATÓRIO**: Parâmetro \`calendar_id\` agora é obrigatório nos endpoints:
+  - \`GET /api/calendar/availability/:date?calendar_id=UUID\`
+  - \`POST /api/calendar/schedule\` (calendar_id no body)
+- **COMO OBTER**: Use \`GET /api/calendar/integrations\` para listar agendas disponíveis
+- **VALIDAÇÃO**: API valida se calendar_id pertence à sua empresa
+- **BENEFÍCIO**: Permite usar múltiplas agendas Google Calendar simultaneamente
 
 **⏰ TIMEZONE - Como Agendar no Horário Correto:**
 - A API usa automaticamente o timezone configurado na empresa/usuário
@@ -3487,6 +3496,14 @@ app.get('/health', (req, res) => {
  *         description: Horário de fim para verificação (formato HH:MM)
  *         example: "18:00"
  *       - in: query
+ *         name: calendar_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID da integração de calendário (obrigatório). Use GET /api/calendar/integrations para listar as agendas disponíveis
+ *         example: "550e8400-e29b-41d4-a716-446655440000"
+ *       - in: query
  *         name: include_details
  *         schema:
  *           type: boolean
@@ -3640,6 +3657,7 @@ app.get('/health', (req, res) => {
  *               - title
  *               - start_time
  *               - end_time
+ *               - calendar_id
  *             properties:
  *               title:
  *                 type: string
@@ -3669,6 +3687,11 @@ app.get('/health', (req, res) => {
  *                 format: uuid
  *                 description: ID do lead associado (opcional)
  *                 example: "550e8400-e29b-41d4-a716-446655440000"
+ *               calendar_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID da integração de calendário (obrigatório). Use GET /api/calendar/integrations para listar as agendas disponíveis
+ *                 example: "550e8400-e29b-41d4-a716-446655440001"
  *               attendees:
  *                 type: array
  *                 items:
@@ -3713,6 +3736,7 @@ app.get('/health', (req, res) => {
  *                 end_time: "2024-01-15T11:00:00.000Z"
  *                 location: "Escritório Central"
  *                 priority: "high"
+ *                 calendar_id: "550e8400-e29b-41d4-a716-446655440001"
  *             with_lead:
  *               summary: Agendamento com Lead
  *               value:
@@ -3724,6 +3748,7 @@ app.get('/health', (req, res) => {
  *                   - name: "João Silva"
  *                     email: "joao@empresa.com"
  *                     phone: "+5511999999999"
+ *                 calendar_id: "550e8400-e29b-41d4-a716-446655440001"
  *                 create_google_meet: true
  *     responses:
  *       201:
@@ -3862,6 +3887,13 @@ app.get('/health', (req, res) => {
  *           type: string
  *           format: uuid
  *         description: Filtrar por lead específico
+ *       - in: query
+ *         name: calendar_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filtrar por agenda específica (opcional)
+ *         example: "550e8400-e29b-41d4-a716-446655440001"
  *       - in: query
  *         name: priority
  *         schema:
@@ -4062,6 +4094,11 @@ app.get('/health', (req, res) => {
  *                 format: uuid
  *                 nullable: true
  *                 description: ID do lead (pode ser alterado ou removido)
+ *               calendar_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID da integração de calendário (opcional - permite mover para outra agenda)
+ *                 example: "550e8400-e29b-41d4-a716-446655440001"
  *           examples:
  *             update_time:
  *               summary: Alterar Horário
