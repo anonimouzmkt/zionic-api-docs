@@ -16,13 +16,13 @@ const swaggerOptions = {
     openapi: '3.0.3',
     info: {
       title: '🚀 Zionic API',
-      version: '3.5.0',
+      version: '3.6.0',
       description: `
 # API Zionic - WhatsApp Business Integração
 
 **Plataforma completa para automação de WhatsApp Business**
 
-**✨ ATUALIZADO v3.5.0 - Parâmetro calendar_id obrigatório nos endpoints de calendário**
+**✨ ATUALIZADO v3.6.0 - Formato ISO 8601 unificado nos endpoints de calendário**
 
 ## 🌟 **Visão Geral**
 
@@ -79,25 +79,33 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Buscar coluna específica - \`GET /api/columns/:id\`
 - Listar leads de uma coluna - \`GET /api/columns/:id/leads\`
 
-### **Gerenciamento de Agendamentos** 📅 **BREAKING CHANGE na v3.5.0**
-- Verificar disponibilidade - \`GET /api/calendar/availability/:date\` **[calendar_id obrigatório]**
+### **Gerenciamento de Agendamentos** 📅 **NOVO FORMATO na v3.6.0**
+- Verificar disponibilidade - \`GET /api/calendar/availability\` **[start_time/end_time ISO 8601]**
 - Agendar horário - \`POST /api/calendar/schedule\` **[calendar_id obrigatório no body]**
-- Listar agendamentos - \`GET /api/calendar/appointments\` **[calendar_id opcional como filtro]**
+- Listar agendamentos - \`GET /api/calendar/appointments\` **[start_time/end_time ISO ou filtros legacy]**
 - Atualizar agendamento - \`PUT /api/calendar/appointments/:id\` **[calendar_id opcional para mover agenda]**
 - Deletar agendamento - \`DELETE /api/calendar/appointments/:id\`
 - Listar integrações Google Calendar - \`GET /api/calendar/integrations\`
 - Status de múltiplas integrações - \`GET /api/calendar/integrations/status\`
-- **🆕 v3.5.0**: Parâmetro \`calendar_id\` obrigatório para especificar qual agenda usar
-- **🆕 v3.5.0**: Suporte a múltiplas agendas por empresa com especificação obrigatória
-- **🆕 v3.5.0**: Validação automática de pertencimento da agenda à empresa
+- **🆕 v3.6.0**: Formato ISO 8601 unificado (ex: 2025-07-07T11:30:00)
+- **🆕 v3.6.0**: Simplificação de data/hora em parâmetro único
+- **🆕 v3.6.0**: Timezone automático da tabela users.timezone
+- **✅ v3.5.0**: Parâmetro \`calendar_id\` obrigatório para especificar qual agenda usar
+- **✅ v3.5.0**: Suporte a múltiplas agendas por empresa com especificação obrigatória
+
+**⚠️ BREAKING CHANGES v3.6.0 - FORMATO UNIFICADO:**
+- **NOVO FORMATO**: Endpoints de calendário agora usam ISO 8601 unificado:
+  - \`GET /api/calendar/availability?start_time=2025-07-07T09:00:00&end_time=2025-07-07T18:00:00&calendar_id=UUID\`
+  - \`GET /api/calendar/appointments?start_time=2025-07-07T00:00:00&end_time=2025-07-07T23:59:59\`
+- **SIMPLIFICAÇÃO**: Data e hora em parâmetro único ao invés de separados
+- **COMPATIBILIDADE**: Formatos antigos ainda funcionam (LEGACY)
+- **TIMEZONE**: Buscado automaticamente da tabela \`users.timezone\` da empresa
+- **BENEFÍCIO**: Menos redundância e maior precisão temporal
 
 **⚠️ BREAKING CHANGES v3.5.0 - CALENDÁRIO:**
-- **OBRIGATÓRIO**: Parâmetro \`calendar_id\` agora é obrigatório nos endpoints:
-  - \`GET /api/calendar/availability/:date?calendar_id=UUID\`
-  - \`POST /api/calendar/schedule\` (calendar_id no body)
+- **OBRIGATÓRIO**: Parâmetro \`calendar_id\` agora é obrigatório nos endpoints
 - **COMO OBTER**: Use \`GET /api/calendar/integrations\` para listar agendas disponíveis
 - **VALIDAÇÃO**: API valida se calendar_id pertence à sua empresa
-- **BENEFÍCIO**: Permite usar múltiplas agendas Google Calendar simultaneamente
 
 **⏰ TIMEZONE - Como Agendar no Horário Correto:**
 - A API usa automaticamente o timezone configurado na empresa/usuário
@@ -3480,54 +3488,49 @@ app.get('/health', (req, res) => {
 
 /**
  * @swagger
- * /api/calendar/availability/{date}:
+ * /api/calendar/availability:
  *   get:
  *     summary: Verificar Disponibilidade
  *     description: |
- *       **📅 ATUALIZADO na v3.5.0** - Verifica a disponibilidade de horários para uma data específica em agenda específica.
+ *       **📅 ATUALIZADO na v3.6.0** - Verifica a disponibilidade de horários usando formato ISO 8601 unificado.
  *       
- *       **✨ NOVA FUNCIONALIDADE v3.5.0:**
+ *       **✨ NOVA FUNCIONALIDADE v3.6.0:**
+ *       - **FORMATO ISO 8601**: Data e hora em parâmetro único (ex: 2025-07-07T11:30:00)
+ *       - **TIMEZONE AUTOMÁTICO**: Busca timezone da tabela users.timezone automaticamente
+ *       - **SIMPLIFICAÇÃO**: Não precisa mais passar data separada da hora
+ *       
+ *       **✅ FUNCIONALIDADES v3.5.0:**
  *       - **AGENDA ESPECÍFICA**: Verifica disponibilidade apenas na agenda selecionada
  *       - **VALIDAÇÃO AUTOMÁTICA**: calendar_id obrigatório e validado automaticamente
  *       - **MÚLTIPLAS AGENDAS**: Cada empresa pode ter várias agendas independentes
  *       
  *       **Funcionalidades:**
- *       - Retorna se o dia está completamente livre na agenda específica
+ *       - Retorna se o período está completamente livre na agenda específica
  *       - Lista horários ocupados com detalhes do agendamento
- *       - Permite filtrar por horário de início e fim
+ *       - Período de verificação flexível (minutos, horas, dias)
  *       - Integração automática com agenda Google Calendar selecionada
- *       
- *       **Parâmetros de Consulta Opcionais:**
- *       - `start_hour`: Horário de início para verificação (formato HH:MM)
- *       - `end_hour`: Horário de fim para verificação (formato HH:MM)
- *       - `include_details`: Se deve incluir detalhes dos agendamentos (true/false)
+ *       - Resolução automática de calendários "primary" → email real
  *     tags:
- *       - 📅 Calendar Management (v3.3)
+ *       - 📅 Calendar Management (v3.6.0)
  *     security:
  *       - BearerAuth: []
  *     parameters:
- *       - in: path
- *         name: date
+ *       - in: query
+ *         name: start_time
  *         required: true
  *         schema:
  *           type: string
- *           format: date
- *         description: Data para verificação de disponibilidade (formato YYYY-MM-DD)
- *         example: "2024-01-15"
+ *           format: date-time
+ *         description: Data/hora de início para verificação (formato ISO 8601)
+ *         example: "2025-07-07T09:00:00"
  *       - in: query
- *         name: start_hour
+ *         name: end_time
+ *         required: true
  *         schema:
  *           type: string
- *           pattern: "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
- *         description: Horário de início para verificação (formato HH:MM)
- *         example: "09:00"
- *       - in: query
- *         name: end_hour
- *         schema:
- *           type: string
- *           pattern: "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
- *         description: Horário de fim para verificação (formato HH:MM)
- *         example: "18:00"
+ *           format: date-time
+ *         description: Data/hora de fim para verificação (formato ISO 8601)
+ *         example: "2025-07-07T18:00:00"
  *       - in: query
  *         name: calendar_id
  *         required: true
@@ -3536,12 +3539,6 @@ app.get('/health', (req, res) => {
  *           format: uuid
  *         description: ID da integração de calendário (obrigatório). Use GET /api/calendar/integrations para listar as agendas disponíveis
  *         example: "550e8400-e29b-41d4-a716-446655440000"
- *       - in: query
- *         name: include_details
- *         schema:
- *           type: boolean
- *           default: true
- *         description: Se deve incluir detalhes dos agendamentos
  *     responses:
  *       200:
  *         description: Disponibilidade verificada com sucesso
@@ -3605,7 +3602,7 @@ app.get('/health', (req, res) => {
  *                       example: 3
  *             examples:
  *               completely_free:
- *                 summary: Dia Completamente Livre
+ *                 summary: Período Completamente Livre (Formato ISO 8601)
  *                 value:
  *                   success: true
  *                   data:
@@ -4725,6 +4722,39 @@ app.get('/health', (req, res) => {
  *         description: Erro interno do servidor
  */
 
+/**
+ * ═══════════════════════════════════════════════════════════════
+ * 📋 CHANGELOG - ZIONIC API v3.6.0
+ * ═══════════════════════════════════════════════════════════════
+ * 
+ * 🆕 NOVIDADES v3.6.0 - FORMATO ISO 8601 UNIFICADO:
+ * 
+ * 📅 Calendar Endpoints Simplificados:
+ * • GET /api/calendar/availability
+ *   - ANTES: /:date + start_hour/end_hour (separados)
+ *   - AGORA: ?start_time=2025-07-07T09:00:00&end_time=2025-07-07T18:00:00
+ * 
+ * • GET /api/calendar/appointments  
+ *   - NOVO: start_time/end_time em formato ISO 8601 (PREFERIDO)
+ *   - LEGACY: date, start_date/end_date ainda funcionam
+ * 
+ * 🌍 Timezone Automático:
+ * • Busca automática de users.timezone da empresa
+ * • Fallback: company_settings.timezone → 'America/Sao_Paulo'
+ * 
+ * ✨ Benefícios:
+ * • Menos redundância (data + hora em parâmetro único)
+ * • Maior precisão temporal
+ * • Compatibilidade mantida com formatos antigos
+ * • Resolução automática de "primary" → email real
+ * 
+ * 🔧 Breaking Changes:
+ * • GET /availability/:date removido (agora usa query params)
+ * • Formatos antigos marcados como LEGACY (ainda funcionam)
+ * 
+ * ═══════════════════════════════════════════════════════════════
+ */
+
 app.listen(port, () => {
   console.log('');
   console.log('⚡ ═══════════════════════════════════════════════');
@@ -4741,7 +4771,8 @@ app.listen(port, () => {
   console.log(`🌐 Base URL: https://api.zionic.app`);
   console.log(`🖼️ Logo: Zionic oficial integrado`);
   console.log(`📱 Sidebar: Mensagens + Agent Control + CRM (organizado)`);
-  console.log(`🎯 Novos: Leads, Pipelines, Columns e Calendar Management (v3.5.0 - INTEGRAÇÃO AUTOMÁTICA GOOGLE CALENDAR)`);
+  console.log(`📅 v3.6.0: Formato ISO 8601 unificado - Calendar endpoints simplificados`);
+  console.log(`🎯 v3.5.0: Leads, Pipelines, Columns e Calendar Management - INTEGRAÇÃO AUTOMÁTICA GOOGLE CALENDAR`);
   console.log(`🤖 v3.4: Custom Agent Messages com visual diferenciado`);
   console.log(`📸 v3.4.2: Envio de imagem via base64 direto`);
   console.log(`⚙️ v3.4.4: send-image-base64 100% visível e funcional`);
