@@ -107,12 +107,14 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - **COMO OBTER**: Use \`GET /api/calendar/integrations\` para listar agendas disponíveis
 - **VALIDAÇÃO**: API valida se calendar_id pertence à sua empresa
 
-**⏰ TIMEZONE - Como Agendar no Horário Correto:**
-- A API usa automaticamente o timezone configurado na empresa/usuário
+**⏰ TIMEZONE - Como Agendar no Horário Correto (v3.5.1):**
+- ✅ **NOVA LÓGICA**: Horários SEMPRE interpretados como timezone da empresa
+- ✅ **SEM AMBIGUIDADE**: Remove automaticamente sufixos de timezone (.000Z, +XX:XX)
+- ✅ **CONVERSÃO AUTOMÁTICA**: Converte para UTC baseado no timezone da empresa
 - Se não configurado, usa timezone padrão do Brasil (America/Sao_Paulo - GMT-3)
-- Para agendar às 10h no horário local, envie: \`"2024-01-15T10:00:00"\`
-- A API converte automaticamente considerando seu timezone
-- Formatos aceitos: ISO 8601 com ou sem timezone explícito
+- **EXEMPLO**: Para agendar às 09h em São Paulo, envie: \`"2025-07-18T09:00:00.000Z"\`
+- **RESULTADO**: API interpreta como 09h São Paulo e salva como 12h UTC no banco
+- **MELHORIA**: Elimina confusão entre horário local vs UTC
 - **TODOS os endpoints de calendário respeitam e retornam o timezone configurado**
 - **GET /availability/:date** - Considera horários no timezone correto
 - **POST /schedule** - Cria agendamentos considerando timezone da empresa
@@ -121,6 +123,12 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - **DELETE /appointments/:id** - Remove considerando timezone
 - **Resposta JSON sempre inclui campo "timezone" para confirmação**
 
+**🤖 AGENDAMENTOS VIA AGENTES IA (v3.5.1):**
+- ✅ **NOVO CAMPO**: \`created_by_agent: true/false\` em todos os agendamentos
+- ✅ **DIFERENCIAÇÃO VISUAL**: Badge distintivo no app para agendamentos criados por IA
+- ✅ **INTEGRAÇÃO N8N**: Marque \`created_by_agent: true\` em automações
+- ✅ **ANALYTICS**: Relatórios separados por tipo de criação (humano vs IA)
+
 **📋 GUIA DE MIGRAÇÃO v3.4 → v3.5.0:**
 
 \`\`\`javascript
@@ -128,7 +136,7 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 GET /api/calendar/availability/2024-01-15
 POST /api/calendar/schedule { "title": "Reunião" }
 
-// ✅ AGORA (v3.5.0) 
+// ✅ AGORA (v3.5.1) 
 // 1. Primeiro: Obter calendar_id
 GET /api/calendar/integrations
 
@@ -136,10 +144,13 @@ GET /api/calendar/integrations
 GET /api/calendar/availability/2024-01-15?calendar_id=UUID
 POST /api/calendar/schedule { 
   "title": "Reunião",
-  "calendar_id": "UUID"  // ← OBRIGATÓRIO
+  "start_time": "2025-07-18T09:00:00.000Z",  // ← Sempre timezone da empresa
+  "end_time": "2025-07-18T10:00:00.000Z",
+  "calendar_id": "UUID",  // ← OBRIGATÓRIO
+  "created_by_agent": true  // ← NOVO: Para agendamentos via IA
 }
 
-// 3. Resultado: Evento criado AUTOMATICAMENTE no Google Calendar!
+// 3. Resultado: Evento criado AUTOMATICAMENTE no Google Calendar no horário correto!
 \`\`\`
 
 **🔄 BENEFÍCIOS DA ATUALIZAÇÃO:**
@@ -149,12 +160,15 @@ POST /api/calendar/schedule {
 - ✅ **Google Meet**: Links gerados automaticamente para reuniões
 - ✅ **Sincronização Real**: Alterações refletidas imediatamente no Google
 
-### **Mensagens de Custom Agents** 🤖 **ATUALIZADO na v3.4.3**
+### **Custom Agents - Mensagens e Agendamentos** 🤖 **ATUALIZADO na v3.5.1**
 - **✨ NOVO:** Parâmetro \`sent_via_agent\` em **TODAS** as rotas de conversa
-- Marcação visual diferenciada para mensagens automáticas
+- **✨ NOVO:** Parâmetro \`created_by_agent\` em **TODOS** os agendamentos
+- Marcação visual diferenciada para mensagens e agendamentos automáticos
 - Badge roxo "Enviado via Custom Agent" no chat  
+- Badge distintivo para agendamentos criados por IA no calendário
 - Suporte completo para texto, imagem, áudio, vídeo e documento
 - Integração otimizada com N8N, webhooks e sistemas externos
+- Analytics separados por tipo de criação (humano vs IA)
 
 ## 🔑 **Autenticação**
 
@@ -3762,6 +3776,10 @@ app.get('/health', (req, res) => {
  *                 type: boolean
  *                 default: true
  *                 description: Se deve enviar notificações aos participantes
+ *               created_by_agent:
+ *                 type: boolean
+ *                 default: false
+ *                 description: Indica se o agendamento foi criado por um agente IA (usado para diferenciação visual no app)
  *           examples:
  *             basic_appointment:
  *               summary: Agendamento Básico
@@ -3786,6 +3804,16 @@ app.get('/health', (req, res) => {
  *                     phone: "+5511999999999"
  *                 calendar_id: "550e8400-e29b-41d4-a716-446655440001"
  *                 create_google_meet: true
+ *             agent_created:
+ *               summary: Agendamento Criado por Agente IA
+ *               value:
+ *                 title: "Reunião automática via IA"
+ *                 description: "Agendamento criado automaticamente pelo agente inteligente"
+ *                 start_time: "2025-07-18T09:00:00.000Z"
+ *                 end_time: "2025-07-18T10:00:00.000Z"
+ *                 location: "Escritório Central"
+ *                 calendar_id: "550e8400-e29b-41d4-a716-446655440001"
+ *                 created_by_agent: true
  *     responses:
  *       201:
  *         description: Agendamento criado com sucesso (inclui criação automática no Google Calendar)
@@ -3825,6 +3853,10 @@ app.get('/health', (req, res) => {
  *                         google_meet_link:
  *                           type: string
  *                           nullable: true
+ *                         created_by_agent:
+ *                           type: boolean
+ *                           description: Indica se foi criado por agente IA
+ *                           example: false
  *                     google_calendar:
  *                       type: object
  *                       properties:
