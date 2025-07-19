@@ -16,13 +16,13 @@ const swaggerOptions = {
     openapi: '3.0.3',
     info: {
       title: '🚀 Zionic API',
-      version: '3.6.1',
+      version: '3.7.0',
       description: `
 # API Zionic - WhatsApp Business Integração
 
 **Plataforma completa para automação de WhatsApp Business**
 
-**✨ ATUALIZADO v3.6.1 - Sistema de anexos para leads**
+**✨ ATUALIZADO v3.7.0 - Sistema de cálculo de tokens OpenAI**
 
 ## 🌟 **Visão Geral**
 
@@ -92,6 +92,12 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Deletar agendamento - \`DELETE /api/calendar/appointments/:id\`
 - Listar integrações Google Calendar - \`GET /api/calendar/integrations\`
 - Status de múltiplas integrações - \`GET /api/calendar/integrations/status\`
+
+### **Cálculo de Tokens OpenAI** 🧮 **NOVO na v3.7.0**
+- Listar modelos suportados - \`GET /api/tokens/models\`
+- Calcular tokens de entrada - \`POST /api/tokens/count\`
+- Validar entrada para modelo - \`POST /api/tokens/validate\`
+- Testar encoding específico - \`GET /api/tokens/encoding/:model\`
 - **🆕 v3.6.1**: Sistema completo de anexos para leads (upload base64, preview, categorização)
 - **🆕 v3.6.0**: Formato ISO 8601 unificado (ex: 2025-07-07T11:30:00)
 - **🆕 v3.6.0**: Simplificação de data/hora em parâmetro único
@@ -208,6 +214,100 @@ Headers: { "Authorization": "Bearer zio_sua_api_key" }
 // ✅ TIPOS DE ARQUIVO SUPORTADOS:
 // PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, CSV, JSON, XML
 // JPG, PNG, GIF, WEBP, SVG, ZIP, RAR (máximo 50MB)
+\`\`\`
+
+**🧮 GUIA DE USO - CÁLCULO DE TOKENS OPENAI (v3.7.0):**
+
+\`\`\`javascript
+// 🧮 1. LISTAR MODELOS SUPORTADOS
+GET /api/tokens/models
+Headers: { "Authorization": "Bearer zio_sua_api_key" }
+
+// 📊 2. CALCULAR TOKENS TOTAIS DO ASSISTENTE
+POST /api/tokens/count
+Headers: { "Authorization": "Bearer zio_sua_api_key" }
+Body: {
+  "user_message": "Qual é a capital do Brasil?",
+  "assistant_message": "A capital do Brasil é Brasília, que foi inaugurada em 1960 e está localizada no Distrito Federal.",
+  "prompt": "Você é um assistente útil que responde perguntas de forma clara e precisa.",
+  "model": "gpt-3.5-turbo"
+}
+
+// 💰 3. RESPOSTA COM CÁLCULO COMPLETO
+{
+  "success": true,
+  "data": {
+    "input_tokens": 25,      // prompt + user_message
+    "output_tokens": 32,     // assistant_message
+    "total_tokens": 57,      // entrada + saída
+    "model": "gpt-3.5-turbo",
+    "calculation_details": {
+      "breakdown": {
+        "prompt": { "tokens": 15 },
+        "user_message": { "tokens": 10 },
+        "assistant_message": { "tokens": 32 }
+      }
+    },
+    "cost_estimate": {
+      "input_cost_usd": 0.000025,
+      "output_cost_usd": 0.000064,
+      "total_cost_usd": 0.000089
+    }
+  }
+}
+
+// 🔧 4. CALCULAR COM FUNÇÕES/TOOLS
+POST /api/tokens/count
+Headers: { "Authorization": "Bearer zio_sua_api_key" }
+Body: {
+  "messages": [
+    { "role": "user", "content": "Qual o clima hoje?" }
+  ],
+  "functions": [
+    {
+      "name": "get_weather",
+      "description": "Obter informações do clima",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "location": { "type": "string", "description": "Localização" }
+        }
+      }
+    }
+  ],
+  "model": "gpt-4"
+}
+
+// ✅ 5. VALIDAR SE ENTRADA CABE NO MODELO
+POST /api/tokens/validate
+Headers: { "Authorization": "Bearer zio_sua_api_key" }
+Body: {
+  "text": "Texto muito longo...",
+  "model": "gpt-3.5-turbo",
+  "max_tokens": 1000
+}
+
+// 🔍 6. TESTAR ENCODING ESPECÍFICO
+GET /api/tokens/encoding/gpt-4?text=Olá mundo
+Headers: { "Authorization": "Bearer zio_sua_api_key" }
+
+// 🎯 CASOS DE USO:
+// - Estimar custos antes de chamadas à OpenAI
+// - Otimizar prompts para economia de tokens
+// - Validar limites antes de processar textos longos
+// - Debug de problemas de tokenização
+// - Comparar eficiência entre modelos
+
+// 💰 PREÇOS APROXIMADOS (USD por 1K tokens):
+// gpt-3.5-turbo: $0.001 entrada + $0.002 saída  
+// gpt-4: $0.03 entrada + $0.06 saída
+// gpt-4o: $0.005 entrada + $0.015 saída
+// gpt-4o-mini: $0.00015 entrada + $0.0006 saída
+
+// ⚠️ LIMITAÇÕES:
+// - Calcula apenas tokens de ENTRADA
+// - Tokens de saída são estimados via max_tokens
+// - Tokens reais de saída só conhecidos após chamada à API
 \`\`\`
 
 ### **Custom Agents - Mensagens e Agendamentos** 🤖 **ATUALIZADO na v3.5.1**
@@ -803,21 +903,22 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     service: 'Zionic API Documentation',
-    version: '3.4.4',
+    version: '3.7.0',
     timestamp: new Date().toISOString(),
     ui: 'Scalar API Reference',
-    endpoints: 39,
+    endpoints: 43,
     baseUrl: 'https://api.zionic.app',
     new_features: [
-      '🆕 v3.4.4: Correção final sidebar - send-image-base64 100% visível e funcional',
-      '🆕 v3.4.3: Endpoint send-image-base64 reorganizado na documentação',
-      '🆕 v3.4.2: POST /api/conversation/send-image-base64 - Envio de imagem via base64',
-      '🆕 v3.4.2: Parâmetro sent_via_agent em todas as rotas de conversa',
-      '🆕 v3.4.2: Visual diferenciado para mensagens de custom agents',
-      'Multiple Google Calendar integrations per company',
-      'GET /api/calendar/integrations - List all calendar integrations',
-      'GET /api/calendar/integrations/status - Quick integration status check',
-      'Enhanced sync support for multiple calendars simultaneously'
+      '🆕 v3.7.0: Sistema completo de cálculo de tokens OpenAI usando Tiktoken',
+      '🆕 v3.7.0: GET /api/tokens/models - Lista modelos suportados com limitações',
+      '🆕 v3.7.0: POST /api/tokens/count - Calcula tokens de entrada (texto/chat/funções)',
+      '🆕 v3.7.0: POST /api/tokens/validate - Valida se entrada cabe no modelo',
+      '🆕 v3.7.0: GET /api/tokens/encoding/:model - Testa encoding específico',
+      '🆕 v3.7.0: Estimativas de custo em USD baseadas nos preços da OpenAI',
+      '🆕 v3.6.1: Sistema completo de anexos para leads (upload base64, preview, categorização)',
+      '🆕 v3.6.0: Formato ISO 8601 unificado para endpoints de calendar',
+      '🆕 v3.5.0: Integração automática com Google Calendar em tempo real',
+      '🆕 v3.4.4: POST /api/conversation/send-image-base64 - Envio de imagem via base64'
     ]
   });
 });
@@ -5061,8 +5162,675 @@ app.get('/health', (req, res) => {
  */
 
 /**
+ * @swagger
+ * /api/tokens/models:
+ *   get:
+ *     summary: 📋 Listar Modelos Suportados
+ *     description: |
+ *       **🧮 NOVO na v3.7.0** - Lista todos os modelos OpenAI suportados para cálculo de tokens com informações detalhadas.
+ *       
+ *       **Funcionalidades:**
+ *       - Lista modelos GPT-3.5, GPT-4, GPT-4o com limitações
+ *       - Mostra encoding usado por cada modelo
+ *       - Máximo de tokens por modelo
+ *       - Preços aproximados por 1K tokens
+ *       - Agrupamento por tipo de encoding
+ *       
+ *       **Modelos Suportados:**
+ *       - **GPT-4o/GPT-4o-mini**: o200k_base (128K tokens)
+ *       - **GPT-4/GPT-3.5-turbo**: cl100k_base (4K-128K tokens)
+ *       - **Text-davinci**: p50k_base (4K tokens)
+ *       
+ *       **Casos de Uso:**
+ *       - Verificar qual modelo usar para tarefas específicas
+ *       - Calcular custos antes de fazer chamadas
+ *       - Entender limitações de tokens de cada modelo
+ *     tags:
+ *       - 🧮 Token Calculation (v3.7.0)
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de modelos retornada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     supported_models:
+ *                       type: object
+ *                       additionalProperties:
+ *                         type: object
+ *                         properties:
+ *                           encoding:
+ *                             type: string
+ *                             example: "cl100k_base"
+ *                           max_tokens:
+ *                             type: integer
+ *                             example: 128000
+ *                     default_model:
+ *                       type: string
+ *                       example: "gpt-3.5-turbo"
+ *                     encodings:
+ *                       type: object
+ *                       additionalProperties:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *             examples:
+ *               model_list:
+ *                 summary: Lista Completa de Modelos
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     supported_models:
+ *                       "gpt-4o":
+ *                         encoding: "o200k_base"
+ *                         max_tokens: 128000
+ *                       "gpt-4o-mini":
+ *                         encoding: "o200k_base"
+ *                         max_tokens: 128000
+ *                       "gpt-4-turbo":
+ *                         encoding: "cl100k_base"
+ *                         max_tokens: 128000
+ *                       "gpt-4":
+ *                         encoding: "cl100k_base"
+ *                         max_tokens: 8192
+ *                       "gpt-3.5-turbo":
+ *                         encoding: "cl100k_base"
+ *                         max_tokens: 4096
+ *                     default_model: "gpt-3.5-turbo"
+ *                     encodings:
+ *                       "o200k_base": ["gpt-4o", "gpt-4o-mini"]
+ *                       "cl100k_base": ["gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
+ *                       "p50k_base": ["text-davinci-003", "text-davinci-002"]
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+/**
+ * @swagger
+ * /api/tokens/count:
+ *   post:
+ *     summary: 🧮 Calcular Tokens Totais do Assistente
+ *     description: |
+ *       **🧮 NOVO na v3.7.0** - Calcula tokens totais de uma conversa com assistente usando a biblioteca Tiktoken.
+ *       
+ *       **Funcionalidades:**
+ *       - Calcula tokens de entrada (prompt + mensagem do usuário)
+ *       - Calcula tokens de saída (resposta do assistente)
+ *       - Calcula total de tokens (entrada + saída)
+ *       - Estimativa de custo real em USD
+ *       - Breakdown detalhado por componente
+ *       
+ *       **Como Funciona:**
+ *       - **Entrada**: prompt do sistema + mensagem do usuário
+ *       - **Saída**: resposta gerada pelo assistente
+ *       - **Total**: entrada + saída
+ *       
+ *       **Ideal Para:**
+ *       - Calcular custos reais após usar OpenAI
+ *       - Monitorar gastos com assistentes
+ *       - Otimizar prompts para economia
+ *       - Análise de eficiência de conversas
+ *     tags:
+ *       - 🧮 Token Calculation (v3.7.0)
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - user_message
+ *               - assistant_message
+ *               - prompt
+ *             properties:
+ *               user_message:
+ *                 type: string
+ *                 description: Mensagem que o usuário enviou para o assistente
+ *                 example: "Qual é a capital do Brasil?"
+ *               assistant_message:
+ *                 type: string
+ *                 description: Resposta que o assistente gerou
+ *                 example: "A capital do Brasil é Brasília, que foi inaugurada em 1960 e está localizada no Distrito Federal."
+ *               prompt:
+ *                 type: string
+ *                 description: Prompt do sistema usado pelo assistente
+ *                 example: "Você é um assistente útil que responde perguntas de forma clara e precisa."
+ *               model:
+ *                 type: string
+ *                 default: "gpt-3.5-turbo"
+ *                 description: Modelo para cálculo de tokens
+ *                 example: "gpt-4"
+ *                 enum: [gpt-3.5-turbo, gpt-4, gpt-4-turbo, gpt-4o, gpt-4o-mini, text-davinci-003]
+ *               max_tokens:
+ *                 type: integer
+ *                 description: Máximo de tokens de saída esperados (para estimativa de custo)
+ *                 example: 150
+ *           examples:
+ *             simple_text:
+ *               summary: Texto Simples
+ *               value:
+ *                 text: "Olá, quantos tokens este texto possui?"
+ *                 model: "gpt-3.5-turbo"
+ *             chat_messages:
+ *               summary: Chat Completions
+ *               value:
+ *                 messages:
+ *                   - role: "system"
+ *                     content: "Você é um assistente útil."
+ *                   - role: "user"
+ *                     content: "Qual é a capital do Brasil?"
+ *                 model: "gpt-4"
+ *                 max_tokens: 150
+ *             with_functions:
+ *               summary: Com Funções/Tools
+ *               value:
+ *                 messages:
+ *                   - role: "user"
+ *                     content: "Qual o clima hoje?"
+ *                 functions:
+ *                   - name: "get_weather"
+ *                     description: "Obter informações do clima"
+ *                     parameters:
+ *                       type: "object"
+ *                       properties:
+ *                         location:
+ *                           type: "string"
+ *                           description: "Localização"
+ *                 model: "gpt-4"
+ *     responses:
+ *       200:
+ *         description: Tokens calculados com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     input_tokens:
+ *                       type: integer
+ *                       example: 23
+ *                       description: Total de tokens de entrada (mensagens + funções)
+ *                     function_tokens:
+ *                       type: integer
+ *                       example: 0
+ *                       description: Tokens usados pelas definições de funções
+ *                     model:
+ *                       type: string
+ *                       example: "gpt-4"
+ *                     model_limit:
+ *                       type: integer
+ *                       example: 8192
+ *                       description: Limite máximo de tokens do modelo
+ *                     remaining_tokens:
+ *                       type: integer
+ *                       example: 8169
+ *                       description: Tokens restantes após entrada
+ *                     max_output_tokens:
+ *                       type: integer
+ *                       example: 150
+ *                       description: Máximo de tokens de saída possíveis
+ *                     can_process:
+ *                       type: boolean
+ *                       example: true
+ *                       description: Se a entrada cabe no modelo
+ *                     calculation_details:
+ *                       type: object
+ *                       properties:
+ *                         type:
+ *                           type: string
+ *                           enum: [simple_text, chat_completions]
+ *                           example: "chat_completions"
+ *                         messages_count:
+ *                           type: integer
+ *                           example: 2
+ *                         encoding:
+ *                           type: string
+ *                           example: "cl100k_base"
+ *                         message_breakdown:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               index:
+ *                                 type: integer
+ *                               role:
+ *                                 type: string
+ *                               content_length:
+ *                                 type: integer
+ *                               estimated_tokens:
+ *                                 type: integer
+ *                     cost_estimate:
+ *                       type: object
+ *                       nullable: true
+ *                       properties:
+ *                         input_cost_usd:
+ *                           type: number
+ *                           example: 0.00069
+ *                           description: Custo estimado dos tokens de entrada
+ *                         max_output_cost_usd:
+ *                           type: number
+ *                           example: 0.009
+ *                           description: Custo máximo estimado da saída
+ *                         max_total_cost_usd:
+ *                           type: number
+ *                           example: 0.00969
+ *                           description: Custo total máximo estimado
+ *                         per_1k_tokens:
+ *                           type: object
+ *                           properties:
+ *                             input:
+ *                               type: number
+ *                               example: 0.03
+ *                             output:
+ *                               type: number
+ *                               example: 0.06
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *             examples:
+ *               simple_result:
+ *                 summary: Resultado Texto Simples
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     input_tokens: 12
+ *                     function_tokens: 0
+ *                     model: "gpt-3.5-turbo"
+ *                     model_limit: 4096
+ *                     remaining_tokens: 4084
+ *                     max_output_tokens: 4084
+ *                     can_process: true
+ *                     calculation_details:
+ *                       type: "simple_text"
+ *                       text_length: 38
+ *                       tokens: 12
+ *                       encoding: "cl100k_base"
+ *                     cost_estimate:
+ *                       input_cost_usd: 0.000012
+ *                       max_output_cost_usd: 0.008168
+ *                       max_total_cost_usd: 0.00818
+ *                       per_1k_tokens:
+ *                         input: 0.001
+ *                         output: 0.002
+ *               chat_result:
+ *                 summary: Resultado Chat Completions
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     input_tokens: 23
+ *                     function_tokens: 0
+ *                     model: "gpt-4"
+ *                     model_limit: 8192
+ *                     remaining_tokens: 8169
+ *                     max_output_tokens: 150
+ *                     can_process: true
+ *                     calculation_details:
+ *                       type: "chat_completions"
+ *                       messages_count: 2
+ *                       encoding: "cl100k_base"
+ *                       message_breakdown:
+ *                         - index: 0
+ *                           role: "system"
+ *                           content_length: 25
+ *                           estimated_tokens: 6
+ *                         - index: 1
+ *                           role: "user"
+ *                           content_length: 25
+ *                           estimated_tokens: 7
+ *                     cost_estimate:
+ *                       input_cost_usd: 0.00069
+ *                       max_output_cost_usd: 0.009
+ *                       max_total_cost_usd: 0.00969
+ *                       per_1k_tokens:
+ *                         input: 0.03
+ *                         output: 0.06
+ *       400:
+ *         description: Entrada inválida
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Entrada obrigatória"
+ *                 message:
+ *                   type: string
+ *                   example: "Forneça 'text' para texto simples ou 'messages' para chat completions"
+ *       500:
+ *         description: Biblioteca tiktoken não disponível
+ */
+
+/**
+ * @swagger
+ * /api/tokens/validate:
+ *   post:
+ *     summary: ✅ Validar Entrada para Modelo
+ *     description: |
+ *       **🧮 NOVO na v3.7.0** - Valida se uma entrada (texto ou mensagens) cabe no modelo especificado.
+ *       
+ *       **Funcionalidades:**
+ *       - Verifica se entrada + saída cabem no limite do modelo
+ *       - Recomendações para otimização se não couber
+ *       - Sugestões de modelos alternativos
+ *       - Validação rápida antes de fazer chamadas custosas
+ *       
+ *       **Casos de Uso:**
+ *       - Verificar viabilidade antes de chamadas à API
+ *       - Escolher modelo adequado para tamanho da entrada
+ *       - Otimizar max_tokens baseado no espaço disponível
+ *       - Evitar erros de limite de tokens
+ *     tags:
+ *       - 🧮 Token Calculation (v3.7.0)
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               text:
+ *                 type: string
+ *                 description: Texto para validação (use OU text OU messages)
+ *                 example: "Texto longo que precisa ser validado..."
+ *               messages:
+ *                 type: array
+ *                 description: Mensagens para validação (use OU text OU messages)
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     role:
+ *                       type: string
+ *                       enum: [system, user, assistant]
+ *                     content:
+ *                       type: string
+ *               functions:
+ *                 type: array
+ *                 description: Definições de funções (opcional)
+ *                 items:
+ *                   type: object
+ *               model:
+ *                 type: string
+ *                 default: "gpt-3.5-turbo"
+ *                 description: Modelo para validação
+ *                 example: "gpt-3.5-turbo"
+ *               max_tokens:
+ *                 type: integer
+ *                 default: 1000
+ *                 description: Tokens de saída desejados
+ *                 example: 1000
+ *           examples:
+ *             valid_input:
+ *               summary: Entrada Válida
+ *               value:
+ *                 text: "Texto curto para teste"
+ *                 model: "gpt-3.5-turbo"
+ *                 max_tokens: 500
+ *             too_long:
+ *               summary: Entrada Muito Longa
+ *               value:
+ *                 text: "Texto extremamente longo que pode exceder o limite do modelo..."
+ *                 model: "gpt-3.5-turbo"
+ *                 max_tokens: 2000
+ *     responses:
+ *       200:
+ *         description: Validação realizada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     valid:
+ *                       type: boolean
+ *                       example: true
+ *                       description: Se a entrada é válida para o modelo
+ *                     input_tokens:
+ *                       type: integer
+ *                       example: 15
+ *                       description: Tokens de entrada calculados
+ *                     requested_output_tokens:
+ *                       type: integer
+ *                       example: 1000
+ *                       description: Tokens de saída solicitados
+ *                     model_limit:
+ *                       type: integer
+ *                       example: 4096
+ *                       description: Limite do modelo
+ *                     remaining_tokens:
+ *                       type: integer
+ *                       example: 4081
+ *                       description: Tokens restantes após entrada
+ *                     recommendation:
+ *                       type: string
+ *                       example: "Entrada válida para processamento"
+ *                       description: Recomendação de ação
+ *                     alternative_models:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       description: Modelos alternativos se entrada inválida
+ *                       example: []
+ *             examples:
+ *               valid_response:
+ *                 summary: Entrada Válida
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     valid: true
+ *                     input_tokens: 15
+ *                     requested_output_tokens: 1000
+ *                     model_limit: 4096
+ *                     remaining_tokens: 4081
+ *                     recommendation: "Entrada válida para processamento"
+ *                     alternative_models: []
+ *               invalid_response:
+ *                 summary: Entrada Inválida
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     valid: false
+ *                     input_tokens: 3500
+ *                     requested_output_tokens: 1000
+ *                     model_limit: 4096
+ *                     remaining_tokens: 596
+ *                     recommendation: "Reduza max_tokens para 596 ou menos"
+ *                     alternative_models: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"]
+ *       400:
+ *         description: Parâmetros inválidos
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+/**
+ * @swagger
+ * /api/tokens/encoding/{model}:
+ *   get:
+ *     summary: 🔍 Testar Encoding Específico
+ *     description: |
+ *       **🧮 NOVO na v3.7.0** - Testa o encoding de um modelo específico com texto personalizado.
+ *       
+ *       **Funcionalidades:**
+ *       - Mostra tokens individuais gerados
+ *       - Verifica se decoded text = original text
+ *       - Calcula bytes por token médio
+ *       - Útil para debug e entendimento do tokenizer
+ *       
+ *       **Casos de Uso:**
+ *       - Debug de problemas de tokenização
+ *       - Entender como textos são quebrados em tokens
+ *       - Comparar encodings entre modelos
+ *       - Análise de eficiência de encoding
+ *     tags:
+ *       - 🧮 Token Calculation (v3.7.0)
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: model
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [gpt-3.5-turbo, gpt-4, gpt-4-turbo, gpt-4o, gpt-4o-mini, text-davinci-003]
+ *         description: Modelo para testar encoding
+ *         example: "gpt-4"
+ *       - in: query
+ *         name: text
+ *         schema:
+ *           type: string
+ *           default: "Hello, world!"
+ *         description: Texto para testar encoding
+ *         example: "Olá, mundo! Como você está?"
+ *     responses:
+ *       200:
+ *         description: Encoding testado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     model:
+ *                       type: string
+ *                       example: "gpt-4"
+ *                     encoding:
+ *                       type: string
+ *                       example: "cl100k_base"
+ *                     input_text:
+ *                       type: string
+ *                       example: "Olá, mundo!"
+ *                     token_count:
+ *                       type: integer
+ *                       example: 4
+ *                     tokens:
+ *                       type: array
+ *                       items:
+ *                         type: integer
+ *                       example: [47007, 11, 91913]
+ *                       description: Array dos tokens numéricos
+ *                     decoded_text:
+ *                       type: string
+ *                       example: "Olá, mundo!"
+ *                       description: Texto reconstruído dos tokens
+ *                     matches_original:
+ *                       type: boolean
+ *                       example: true
+ *                       description: Se o texto decodificado == original
+ *                     bytes_per_token:
+ *                       type: number
+ *                       example: 3.0
+ *                       description: Média de bytes por token
+ *             examples:
+ *               portuguese_text:
+ *                 summary: Texto em Português
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     model: "gpt-4"
+ *                     encoding: "cl100k_base"
+ *                     input_text: "Olá, mundo! Como você está?"
+ *                     token_count: 8
+ *                     tokens: [47007, 11, 91913, 0, 17797, 25482, 12272, 30]
+ *                     decoded_text: "Olá, mundo! Como você está?"
+ *                     matches_original: true
+ *                     bytes_per_token: 3.25
+ *               english_text:
+ *                 summary: Texto em Inglês
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     model: "gpt-3.5-turbo"
+ *                     encoding: "cl100k_base"
+ *                     input_text: "Hello, world! How are you?"
+ *                     token_count: 6
+ *                     tokens: [9906, 11, 1917, 0, 2650, 527, 499, 30]
+ *                     decoded_text: "Hello, world! How are you?"
+ *                     matches_original: true
+ *                     bytes_per_token: 4.0
+ *       400:
+ *         description: Modelo não suportado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+
+/**
  * ═══════════════════════════════════════════════════════════════
- * 📋 CHANGELOG - ZIONIC API v3.6.0
+ * 📋 CHANGELOG - ZIONIC API v3.7.0
+ * ═══════════════════════════════════════════════════════════════
+ * 
+ * 🆕 NOVIDADES v3.7.0 - SISTEMA DE CÁLCULO DE TOKENS OPENAI:
+ * 
+ * 🧮 Token Calculation Endpoints:
+ * • GET /api/tokens/models
+ *   - Lista modelos suportados (GPT-3.5, GPT-4, GPT-4o)
+ *   - Mostra encoding e limites de cada modelo
+ *   - Preços aproximados por 1K tokens
+ * 
+ * • POST /api/tokens/count
+ *   - Calcula tokens de entrada (texto simples ou chat)
+ *   - Suporte a functions/tools do OpenAI
+ *   - Estimativas de custo em USD
+ *   - Breakdown detalhado por mensagem
+ * 
+ * • POST /api/tokens/validate  
+ *   - Valida se entrada + saída cabem no modelo
+ *   - Recomendações de otimização
+ *   - Sugestões de modelos alternativos
+ * 
+ * • GET /api/tokens/encoding/:model
+ *   - Testa encoding específico com texto personalizado
+ *   - Debug de tokenização
+ *   - Comparação entre modelos
+ * 
+ * 🎯 Biblioteca Tiktoken:
+ * • Cálculos precisos usando biblioteca oficial da OpenAI
+ * • Suporte a encodings: o200k_base, cl100k_base, p50k_base
+ * • Compatível com todos os modelos atuais
+ * 
+ * 💰 Estimativas de Custo:
+ * • Preços atualizados da OpenAI por 1K tokens
+ * • Cálculo de entrada + estimativa máxima de saída
+ * • Útil para otimização de custos
+ * 
+ * ✨ Benefícios:
+ * • Planejamento de custos antes das chamadas
+ * • Otimização de prompts para economia
+ * • Validação automática de limites
+ * • Debug de problemas de tokenização
+ * 
+ * ═══════════════════════════════════════════════════════════════
+ * 📋 CHANGELOG ANTERIOR - v3.6.0 - FORMATO ISO 8601:
  * ═══════════════════════════════════════════════════════════════
  * 
  * 🆕 NOVIDADES v3.6.0 - FORMATO ISO 8601 UNIFICADO:
@@ -5105,10 +5873,11 @@ app.listen(port, () => {
   console.log(`💚 Health Check: http://localhost:${port}/health`);
   console.log('');
   console.log(`🎨 Interface: Scalar API Reference (Clean Design)`);
-  console.log(`📊 Endpoints: 39 endpoints organizados`);
+  console.log(`📊 Endpoints: 43 endpoints organizados`);
   console.log(`🌐 Base URL: https://api.zionic.app`);
   console.log(`🖼️ Logo: Zionic oficial integrado`);
-  console.log(`📱 Sidebar: Mensagens + Agent Control + CRM (organizado)`);
+  console.log(`📱 Sidebar: Mensagens + Agent Control + CRM + Tokens (organizado)`);
+  console.log(`🧮 v3.7.0: Sistema completo de cálculo de tokens OpenAI usando Tiktoken`);
   console.log(`📅 v3.6.0: Formato ISO 8601 unificado - Calendar endpoints simplificados`);
   console.log(`🎯 v3.5.0: Leads, Pipelines, Columns e Calendar Management - INTEGRAÇÃO AUTOMÁTICA GOOGLE CALENDAR`);
   console.log(`🤖 v3.4: Custom Agent Messages com visual diferenciado`);
