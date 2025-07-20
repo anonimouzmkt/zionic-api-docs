@@ -5309,44 +5309,23 @@ app.get('/health', (req, res) => {
  *               model:
  *                 type: string
  *                 default: "gpt-3.5-turbo"
- *                 description: Modelo para cálculo de tokens
+ *                 description: Modelo utilizado (para cálculo preciso de tokens)
  *                 example: "gpt-4"
  *                 enum: [gpt-3.5-turbo, gpt-4, gpt-4-turbo, gpt-4o, gpt-4o-mini, text-davinci-003]
- *               max_tokens:
- *                 type: integer
- *                 description: Máximo de tokens de saída esperados (para estimativa de custo)
- *                 example: 150
  *           examples:
- *             simple_text:
- *               summary: Texto Simples
+ *             assistant_conversation:
+ *               summary: Conversa com Assistente
  *               value:
- *                 text: "Olá, quantos tokens este texto possui?"
+ *                 user_message: "Qual é a capital do Brasil?"
+ *                 assistant_message: "A capital do Brasil é Brasília, que foi inaugurada em 1960 e está localizada no Distrito Federal."
+ *                 prompt: "Você é um assistente útil que responde perguntas de forma clara e precisa."
  *                 model: "gpt-3.5-turbo"
- *             chat_messages:
- *               summary: Chat Completions
+ *             gpt4_conversation:
+ *               summary: Conversa com GPT-4
  *               value:
- *                 messages:
- *                   - role: "system"
- *                     content: "Você é um assistente útil."
- *                   - role: "user"
- *                     content: "Qual é a capital do Brasil?"
- *                 model: "gpt-4"
- *                 max_tokens: 150
- *             with_functions:
- *               summary: Com Funções/Tools
- *               value:
- *                 messages:
- *                   - role: "user"
- *                     content: "Qual o clima hoje?"
- *                 functions:
- *                   - name: "get_weather"
- *                     description: "Obter informações do clima"
- *                     parameters:
- *                       type: "object"
- *                       properties:
- *                         location:
- *                           type: "string"
- *                           description: "Localização"
+ *                 user_message: "Explique o que é inteligência artificial"
+ *                 assistant_message: "Inteligência artificial é um campo da ciência da computação que busca criar sistemas capazes de realizar tarefas que normalmente requerem inteligência humana."
+ *                 prompt: "Você é um professor de tecnologia que explica conceitos complexos de forma simples."
  *                 model: "gpt-4"
  *     responses:
  *       200:
@@ -5364,142 +5343,137 @@ app.get('/health', (req, res) => {
  *                   properties:
  *                     input_tokens:
  *                       type: integer
- *                       example: 23
- *                       description: Total de tokens de entrada (mensagens + funções)
- *                     function_tokens:
+ *                       example: 25
+ *                       description: Total de tokens de entrada (prompt + user_message)
+ *                     output_tokens:
  *                       type: integer
- *                       example: 0
- *                       description: Tokens usados pelas definições de funções
+ *                       example: 32
+ *                       description: Total de tokens de saída (assistant_message)
+ *                     total_tokens:
+ *                       type: integer
+ *                       example: 57
+ *                       description: Total geral de tokens (entrada + saída)
  *                     model:
  *                       type: string
- *                       example: "gpt-4"
- *                     model_limit:
- *                       type: integer
- *                       example: 8192
- *                       description: Limite máximo de tokens do modelo
- *                     remaining_tokens:
- *                       type: integer
- *                       example: 8169
- *                       description: Tokens restantes após entrada
- *                     max_output_tokens:
- *                       type: integer
- *                       example: 150
- *                       description: Máximo de tokens de saída possíveis
- *                     can_process:
- *                       type: boolean
- *                       example: true
- *                       description: Se a entrada cabe no modelo
+ *                       example: "gpt-3.5-turbo"
  *                     calculation_details:
  *                       type: object
  *                       properties:
  *                         type:
  *                           type: string
- *                           enum: [simple_text, chat_completions]
- *                           example: "chat_completions"
- *                         messages_count:
- *                           type: integer
- *                           example: 2
+ *                           enum: [assistant_conversation]
+ *                           example: "assistant_conversation"
+ *                         model:
+ *                           type: string
+ *                           example: "gpt-3.5-turbo"
  *                         encoding:
  *                           type: string
  *                           example: "cl100k_base"
- *                         message_breakdown:
- *                           type: array
- *                           items:
- *                             type: object
- *                             properties:
- *                               index:
- *                                 type: integer
- *                               role:
- *                                 type: string
- *                               content_length:
- *                                 type: integer
- *                               estimated_tokens:
- *                                 type: integer
+ *                         breakdown:
+ *                           type: object
+ *                           properties:
+ *                             prompt:
+ *                               type: object
+ *                               properties:
+ *                                 text_length:
+ *                                   type: integer
+ *                                   example: 70
+ *                                 tokens:
+ *                                   type: integer
+ *                                   example: 15
+ *                             user_message:
+ *                               type: object
+ *                               properties:
+ *                                 text_length:
+ *                                   type: integer
+ *                                   example: 30
+ *                                 tokens:
+ *                                   type: integer
+ *                                   example: 10
+ *                             assistant_message:
+ *                               type: object
+ *                               properties:
+ *                                 text_length:
+ *                                   type: integer
+ *                                   example: 120
+ *                                 tokens:
+ *                                   type: integer
+ *                                   example: 32
+ *                         totals:
+ *                           type: object
+ *                           properties:
+ *                             input_tokens:
+ *                               type: integer
+ *                               example: 25
+ *                             output_tokens:
+ *                               type: integer
+ *                               example: 32
+ *                             total_tokens:
+ *                               type: integer
+ *                               example: 57
  *                     cost_estimate:
  *                       type: object
  *                       nullable: true
  *                       properties:
  *                         input_cost_usd:
  *                           type: number
- *                           example: 0.00069
- *                           description: Custo estimado dos tokens de entrada
- *                         max_output_cost_usd:
+ *                           example: 0.000025
+ *                           description: Custo real dos tokens de entrada
+ *                         output_cost_usd:
  *                           type: number
- *                           example: 0.009
- *                           description: Custo máximo estimado da saída
- *                         max_total_cost_usd:
+ *                           example: 0.000064
+ *                           description: Custo real dos tokens de saída
+ *                         total_cost_usd:
  *                           type: number
- *                           example: 0.00969
- *                           description: Custo total máximo estimado
+ *                           example: 0.000089
+ *                           description: Custo total real da conversa
  *                         per_1k_tokens:
  *                           type: object
  *                           properties:
  *                             input:
  *                               type: number
- *                               example: 0.03
+ *                               example: 0.001
  *                             output:
  *                               type: number
- *                               example: 0.06
+ *                               example: 0.002
  *                     timestamp:
  *                       type: string
  *                       format: date-time
  *             examples:
- *               simple_result:
- *                 summary: Resultado Texto Simples
+ *               assistant_conversation:
+ *                 summary: Cálculo de Conversa com Assistente
  *                 value:
  *                   success: true
  *                   data:
- *                     input_tokens: 12
- *                     function_tokens: 0
+ *                     input_tokens: 25
+ *                     output_tokens: 32
+ *                     total_tokens: 57
  *                     model: "gpt-3.5-turbo"
- *                     model_limit: 4096
- *                     remaining_tokens: 4084
- *                     max_output_tokens: 4084
- *                     can_process: true
  *                     calculation_details:
- *                       type: "simple_text"
- *                       text_length: 38
- *                       tokens: 12
+ *                       type: "assistant_conversation"
  *                       encoding: "cl100k_base"
+ *                       breakdown:
+ *                         prompt:
+ *                           text_length: 70
+ *                           tokens: 15
+ *                         user_message:
+ *                           text_length: 30
+ *                           tokens: 10
+ *                         assistant_message:
+ *                           text_length: 120
+ *                           tokens: 32
+ *                       totals:
+ *                         input_tokens: 25
+ *                         output_tokens: 32
+ *                         total_tokens: 57
  *                     cost_estimate:
- *                       input_cost_usd: 0.000012
- *                       max_output_cost_usd: 0.008168
- *                       max_total_cost_usd: 0.00818
+ *                       input_cost_usd: 0.000025
+ *                       output_cost_usd: 0.000064
+ *                       total_cost_usd: 0.000089
  *                       per_1k_tokens:
  *                         input: 0.001
  *                         output: 0.002
- *               chat_result:
- *                 summary: Resultado Chat Completions
- *                 value:
- *                   success: true
- *                   data:
- *                     input_tokens: 23
- *                     function_tokens: 0
- *                     model: "gpt-4"
- *                     model_limit: 8192
- *                     remaining_tokens: 8169
- *                     max_output_tokens: 150
- *                     can_process: true
- *                     calculation_details:
- *                       type: "chat_completions"
- *                       messages_count: 2
- *                       encoding: "cl100k_base"
- *                       message_breakdown:
- *                         - index: 0
- *                           role: "system"
- *                           content_length: 25
- *                           estimated_tokens: 6
- *                         - index: 1
- *                           role: "user"
- *                           content_length: 25
- *                           estimated_tokens: 7
- *                     cost_estimate:
- *                       input_cost_usd: 0.00069
- *                       max_output_cost_usd: 0.009
- *                       max_total_cost_usd: 0.00969
- *                       per_1k_tokens:
- *                         input: 0.03
- *                         output: 0.06
+
  *       400:
  *         description: Entrada inválida
  *         content:
@@ -5512,10 +5486,10 @@ app.get('/health', (req, res) => {
  *                   example: false
  *                 error:
  *                   type: string
- *                   example: "Entrada obrigatória"
+ *                   example: "Parâmetros obrigatórios"
  *                 message:
  *                   type: string
- *                   example: "Forneça 'text' para texto simples ou 'messages' para chat completions"
+ *                   example: "Forneça: user_message, assistant_message e prompt"
  *       500:
  *         description: Biblioteca tiktoken não disponível
  */
