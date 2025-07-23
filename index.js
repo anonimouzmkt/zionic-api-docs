@@ -16,13 +16,13 @@ const swaggerOptions = {
     openapi: '3.0.3',
     info: {
       title: '🚀 Zionic API',
-      version: '3.7.0',
+      version: '3.8.0',
       description: `
 # API Zionic - WhatsApp Business Integração
 
 **Plataforma completa para automação de WhatsApp Business**
 
-**✨ ATUALIZADO v3.7.0 - Sistema de cálculo de tokens OpenAI**
+**✨ ATUALIZADO v3.8.0 - Busca de conversas por telefone + Sistema de cálculo de tokens OpenAI**
 
 ## 🌟 **Visão Geral**
 
@@ -39,6 +39,7 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Resposta com citação - \`POST /api/messages/reply\`
 
 ### **Mensagens via Conversation**
+- **✨ NOVO v3.8.0** Buscar conversa por telefone - \`GET /api/conversation/find-by-phone/:phone\`
 - Envio de texto - \`POST /api/conversation/send-text\`
 - Envio de imagem via URL - \`POST /api/conversation/send-image\`
 - **✨ NOVO v3.4.4** Envio de imagem via base64 - \`POST /api/conversation/send-image-base64\`
@@ -214,6 +215,86 @@ Headers: { "Authorization": "Bearer zio_sua_api_key" }
 // ✅ TIPOS DE ARQUIVO SUPORTADOS:
 // PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, CSV, JSON, XML
 // JPG, PNG, GIF, WEBP, SVG, ZIP, RAR (máximo 50MB)
+\`\`\`
+
+**🔍 GUIA DE USO - BUSCA DE CONVERSAS POR TELEFONE (v3.8.0):**
+
+\`\`\`javascript
+// 🔍 1. BUSCAR CONVERSA POR TELEFONE NORMALIZADO
+GET /api/conversation/find-by-phone/5511970507364
+Headers: { "Authorization": "Bearer zio_sua_api_key" }
+
+// 🔍 2. BUSCAR POR TELEFONE COM FORMATAÇÃO (SERÁ NORMALIZADO AUTOMATICAMENTE)
+GET /api/conversation/find-by-phone/+55%2011%2097050-7364
+Headers: { "Authorization": "Bearer zio_sua_api_key" }
+
+// 📞 3. RESPOSTA COM DADOS COMPLETOS DA CONVERSA
+{
+  "success": true,
+  "data": {
+    "conversation_id": "550e8400-e29b-41d4-a716-446655440000",
+    "contact_id": "660e8400-e29b-41d4-a716-446655440001",
+    "contact_name": "João Silva",
+    "contact_phone": "5511970507364",
+    "contact_email": "joao@exemplo.com",
+    "external_id": "5511970507364@s.whatsapp.net",
+    "title": "Conversa com João Silva",
+    "status": "active",
+    "search_params": {
+      "original_phone": "+55 (11) 97050-7364",
+      "normalized_phone": "5511970507364"
+    },
+    "method": "rpc_function"
+  }
+}
+
+// 🎯 CASOS DE USO:
+// - Integração com CRM: buscar conversa antes de enviar mensagens
+// - Webhook de terceiros: localizar conversa correspondente
+// - Automação de atendimento: identificar conversa de cliente
+// - Relatórios e analytics: conectar dados de telefone com conversas
+
+// 📱 NORMALIZAÇÃO AUTOMÁTICA:
+// +55 (11) 97050-7364 → 5511970507364
+// (11) 97050-7364     → 5511970507364
+// 11 97050 7364       → 5511970507364
+// 11970507364         → 5511970507364
+
+// ⚠️ FORMATAÇÃO PARA URL:
+// Use encodeURIComponent() para números com caracteres especiais
+const phone = "+55 (11) 97050-7364";
+const encodedPhone = encodeURIComponent(phone);
+const url = \`/api/conversation/find-by-phone/\${encodedPhone}\`;
+
+// 🔧 EXEMPLO JAVASCRIPT COMPLETO
+async function findConversationByPhone(phone) {
+  try {
+    const encodedPhone = encodeURIComponent(phone);
+    const response = await fetch(\`/api/conversation/find-by-phone/\${encodedPhone}\`, {
+      headers: {
+        'Authorization': 'Bearer zio_sua_api_key',
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Conversa encontrada:', data.data.conversation_id);
+      return data.data;
+    } else if (response.status === 404) {
+      console.log('Conversa não encontrada para:', phone);
+      return null;
+    }
+  } catch (error) {
+    console.error('Erro ao buscar conversa:', error);
+  }
+}
+
+// 🚀 USANDO EM WEBHOOK N8N/ZAPIER
+// Quando receber um telefone de sistema externo:
+// 1. Buscar conversa existente pelo telefone
+// 2. Se encontrar: usar conversation_id para enviar mensagem
+// 3. Se não encontrar: criar novo contato/conversa
 \`\`\`
 
 **🧮 GUIA DE USO - CÁLCULO DE TOKENS OPENAI (v3.7.0):**
@@ -856,7 +937,7 @@ function generateScalarHTML() {
     document.addEventListener('DOMContentLoaded', function() {
       console.log('⚡ Zionic API Documentation carregada!');
       console.log('🎨 Design System: Zionic + Scalar');
-      console.log('📊 Endpoints: 39 endpoints documentados');
+      console.log('📊 Endpoints: 44 endpoints documentados');
       console.log('🌐 Base URL: https://api.zionic.app');
       
       // Adicionar logo personalizado após carregamento
@@ -903,12 +984,13 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     service: 'Zionic API Documentation',
-    version: '3.7.0',
+    version: '3.8.0',
     timestamp: new Date().toISOString(),
     ui: 'Scalar API Reference',
-    endpoints: 43,
+    endpoints: 44,
     baseUrl: 'https://api.zionic.app',
     new_features: [
+      '🆕 v3.8.0: GET /api/conversation/find-by-phone/:phone - Busca conversa por telefone normalizado',
       '🆕 v3.7.0: Sistema completo de cálculo de tokens OpenAI usando Tiktoken',
       '🆕 v3.7.0: GET /api/tokens/models - Lista modelos suportados com limitações',
       '🆕 v3.7.0: POST /api/tokens/count - Calcula tokens de entrada (texto/chat/funções)',
@@ -2227,6 +2309,280 @@ app.get('/health', (req, res) => {
  *       200:
  *         description: Conversa marcada como lida
  */
+
+/**
+ * @swagger
+ * /api/conversation/find-by-phone/{phone}:
+ *   get:
+ *     summary: 🔍 Buscar Conversa por Telefone
+ *     description: |
+ *       **✨ NOVO na v3.8.0** - Busca uma conversa existente usando o número de telefone do contato.
+ *       
+ *       **Funcionalidades:**
+ *       - Normalização automática do número de telefone
+ *       - Busca inteligente usando função RPC do banco de dados
+ *       - Fallback para busca JavaScript se RPC falhar
+ *       - Retorna dados completos da conversa e contato
+ *       - Suporte a múltiplos formatos de telefone
+ *       
+ *       **Normalização Automática:**
+ *       - Remove caracteres especiais: `+`, `-`, `(`, `)`, espaços
+ *       - Mantém apenas dígitos numéricos
+ *       - Exemplos de conversão:
+ *         - `+55 (11) 97050-7364` → `5511970507364`
+ *         - `(11) 97050-7364` → `5511970507364`
+ *         - `11 97050 7364` → `5511970507364`
+ *       
+ *       **Casos de Uso:**
+ *       - Integração com CRM: buscar conversa antes de enviar mensagens
+ *       - Webhooks de terceiros: localizar conversa correspondente
+ *       - Automação de atendimento: identificar conversa de cliente
+ *       - Relatórios e analytics: conectar dados de telefone com conversas
+ *       
+ *       **⚠️ Importante para URL:**
+ *       Para números com caracteres especiais, use `encodeURIComponent()`:
+ *       ```javascript
+ *       const phone = "+55 (11) 97050-7364";
+ *       const encodedPhone = encodeURIComponent(phone);
+ *       const url = `/api/conversation/find-by-phone/${encodedPhone}`;
+ *       ```
+ *     tags:
+ *       - 💬 Mensagens via Conversation
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: phone
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: |
+ *           Número de telefone para busca (qualquer formato será normalizado automaticamente).
+ *           
+ *           **Formatos aceitos:**
+ *           - `5511970507364` (normalizado)
+ *           - `+55 11 97050-7364` (brasileiro)
+ *           - `(11) 97050-7364` (com parênteses)
+ *           - `11 97050 7364` (com espaços)
+ *           
+ *           **Para caracteres especiais na URL, use encodeURIComponent()!**
+ *         examples:
+ *           normalized:
+ *             summary: Número Normalizado
+ *             value: "5511970507364"
+ *           brazilian_formatted:
+ *             summary: Formato Brasileiro (codificado)
+ *             value: "%2B55%20(11)%2097050-7364"
+ *           simple_formatted:
+ *             summary: Formato com Parênteses (codificado)
+ *             value: "(11)%2097050-7364"
+ *     responses:
+ *       200:
+ *         description: Conversa encontrada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     conversation_id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: ID único da conversa encontrada
+ *                       example: "550e8400-e29b-41d4-a716-446655440000"
+ *                     contact_id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: ID do contato associado
+ *                       example: "660e8400-e29b-41d4-a716-446655440001"
+ *                     contact_name:
+ *                       type: string
+ *                       description: Nome completo do contato
+ *                       example: "João Silva"
+ *                       nullable: true
+ *                     contact_phone:
+ *                       type: string
+ *                       description: Telefone normalizado do contato
+ *                       example: "5511970507364"
+ *                     contact_email:
+ *                       type: string
+ *                       description: Email do contato
+ *                       example: "joao@exemplo.com"
+ *                       nullable: true
+ *                     external_id:
+ *                       type: string
+ *                       description: ID externo da conversa (formato WhatsApp)
+ *                       example: "5511970507364@s.whatsapp.net"
+ *                     title:
+ *                       type: string
+ *                       description: Título da conversa
+ *                       example: "Conversa com João Silva"
+ *                     status:
+ *                       type: string
+ *                       description: Status da conversa
+ *                       example: "active"
+ *                       enum: [active, archived, closed]
+ *                     created_at:
+ *                       type: string
+ *                       format: date-time
+ *                       description: Data de criação da conversa
+ *                       example: "2024-01-15T10:30:00.000Z"
+ *                     search_params:
+ *                       type: object
+ *                       description: Parâmetros utilizados na busca para debug
+ *                       properties:
+ *                         original_phone:
+ *                           type: string
+ *                           description: Telefone original informado
+ *                           example: "+55 (11) 97050-7364"
+ *                         normalized_phone:
+ *                           type: string
+ *                           description: Telefone após normalização
+ *                           example: "5511970507364"
+ *                     method:
+ *                       type: string
+ *                       description: Método usado para encontrar a conversa
+ *                       example: "rpc_function"
+ *                       enum: [rpc_function, javascript_fallback]
+ *             examples:
+ *               found_conversation:
+ *                 summary: Conversa Encontrada
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     conversation_id: "550e8400-e29b-41d4-a716-446655440000"
+ *                     contact_id: "660e8400-e29b-41d4-a716-446655440001"
+ *                     contact_name: "João Silva"
+ *                     contact_phone: "5511970507364"
+ *                     contact_email: "joao@exemplo.com"
+ *                     external_id: "5511970507364@s.whatsapp.net"
+ *                     title: "Conversa com João Silva"
+ *                     status: "active"
+ *                     created_at: "2024-01-15T10:30:00.000Z"
+ *                     search_params:
+ *                       original_phone: "+55 (11) 97050-7364"
+ *                       normalized_phone: "5511970507364"
+ *                     method: "rpc_function"
+ *               found_with_fallback:
+ *                 summary: Encontrada via Fallback
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     conversation_id: "770e8400-e29b-41d4-a716-446655440002"
+ *                     contact_id: "880e8400-e29b-41d4-a716-446655440003"
+ *                     contact_name: "Maria Santos"
+ *                     contact_phone: "5521987654321"
+ *                     contact_email: null
+ *                     external_id: "5521987654321@s.whatsapp.net"
+ *                     title: "WhatsApp Conversation"
+ *                     status: "active"
+ *                     created_at: "2024-01-10T14:20:00.000Z"
+ *                     search_params:
+ *                       original_phone: "21987654321"
+ *                       normalized_phone: "5521987654321"
+ *                     method: "javascript_fallback"
+ *       400:
+ *         description: Número de telefone inválido ou vazio
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Número de telefone é obrigatório"
+ *                 message:
+ *                   type: string
+ *                   example: "Forneça um número de telefone válido no parâmetro"
+ *             examples:
+ *               empty_phone:
+ *                 summary: Telefone Vazio
+ *                 value:
+ *                   success: false
+ *                   error: "Número de telefone é obrigatório"
+ *                   message: "Forneça um número de telefone válido no parâmetro"
+ *               invalid_phone:
+ *                 summary: Telefone Inválido
+ *                 value:
+ *                   success: false
+ *                   error: "Número de telefone inválido"
+ *                   message: "O número deve conter apenas dígitos após normalização"
+ *       404:
+ *         description: Conversa não encontrada para o telefone informado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Conversa não encontrada"
+ *                 message:
+ *                   type: string
+ *                   example: "Nenhuma conversa ativa encontrada para o número 11970507364 (normalizado: 5511970507364)"
+ *                 search_info:
+ *                   type: object
+ *                   properties:
+ *                     original_phone:
+ *                       type: string
+ *                       example: "11970507364"
+ *                     normalized_phone:
+ *                       type: string
+ *                       example: "5511970507364"
+ *                     method_attempted:
+ *                       type: string
+ *                       example: "rpc_function"
+ *             examples:
+ *               not_found:
+ *                 summary: Conversa Não Encontrada
+ *                 value:
+ *                   success: false
+ *                   error: "Conversa não encontrada"
+ *                   message: "Nenhuma conversa ativa encontrada para o número 11970507364 (normalizado: 5511970507364)"
+ *                   search_info:
+ *                     original_phone: "11970507364"
+ *                     normalized_phone: "5511970507364"
+ *                     method_attempted: "rpc_function"
+ *       401:
+ *         description: Token de autenticação inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Token de acesso obrigatório"
+ *                 message:
+ *                   type: string
+ *                   example: "Inclua o header: Authorization: Bearer YOUR_API_KEY"
+ *       500:
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Erro interno do servidor"
+ *                 details:
+ *                   type: string
+ *                   example: "Database connection failed"
 
 /**
  * @swagger
@@ -5847,10 +6203,11 @@ app.listen(port, () => {
   console.log(`💚 Health Check: http://localhost:${port}/health`);
   console.log('');
   console.log(`🎨 Interface: Scalar API Reference (Clean Design)`);
-  console.log(`📊 Endpoints: 43 endpoints organizados`);
+  console.log(`📊 Endpoints: 44 endpoints organizados`);
   console.log(`🌐 Base URL: https://api.zionic.app`);
   console.log(`🖼️ Logo: Zionic oficial integrado`);
   console.log(`📱 Sidebar: Mensagens + Agent Control + CRM + Tokens (organizado)`);
+  console.log(`🔍 v3.8.0: Busca de conversas por telefone normalizado - GET /find-by-phone/:phone`);
   console.log(`🧮 v3.7.0: Sistema completo de cálculo de tokens OpenAI usando Tiktoken`);
   console.log(`📅 v3.6.0: Formato ISO 8601 unificado - Calendar endpoints simplificados`);
   console.log(`🎯 v3.5.0: Leads, Pipelines, Columns e Calendar Management - INTEGRAÇÃO AUTOMÁTICA GOOGLE CALENDAR`);
