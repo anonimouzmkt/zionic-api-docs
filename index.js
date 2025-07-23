@@ -16,13 +16,50 @@ const swaggerOptions = {
     openapi: '3.0.3',
     info: {
       title: '🚀 Zionic API',
-      version: '3.8.0',
+      version: '3.8.1',
       description: `
 # API Zionic - WhatsApp Business Integração
 
 **Plataforma completa para automação de WhatsApp Business**
 
-**✨ ATUALIZADO v3.8.0 - Busca de conversas por telefone + Sistema de cálculo de tokens OpenAI**
+**✨ ATUALIZADO v3.8.1 - Suporte a OpenAI Thread ID em endpoints de mensagens**
+
+**🧵 NOVO: Parâmetro openai_thread_id:**
+
+\`\`\`javascript
+// Enviar mensagem com thread OpenAI anexada
+POST /api/messages/send
+{
+  "number": "5511999999999",
+  "message": "Olá! Como posso ajudar?",
+  "openai_thread_id": "thread_abc123def456"
+}
+
+// Enviar mídia com thread OpenAI
+POST /api/messages/send-media  
+FormData {
+  "number": "5511999999999",
+  "file": arquivo,
+  "caption": "Documento importante",
+  "openai_thread_id": "thread_abc123def456"
+}
+
+// Responder mensagem com thread OpenAI
+POST /api/messages/reply
+{
+  "number": "5511999999999", 
+  "message": "Obrigado pelo contato!",
+  "quotedMessageId": "uuid-mensagem",
+  "openai_thread_id": "thread_abc123def456"
+}
+\`\`\`
+
+**✅ FUNCIONALIDADES:**
+- Thread ID é salva automaticamente na conversa criada
+- Suporte em todos os endpoints de mensagens por número
+- Validation pattern: ^thread_[a-zA-Z0-9]+$
+- Campo opcional - não quebra compatibilidade
+- Thread pode ser usada por agentes IA posteriormente
 
 ## 🌟 **Visão Geral**
 
@@ -34,6 +71,7 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Teste de API Key - \`GET /api/auth/test\`
 
 ### **Mensagens por Número**
+- **✨ NOVO v3.8.1** Suporte a OpenAI Thread ID - Parâmetro \`openai_thread_id\` em todos os endpoints
 - Envio de texto - \`POST /api/messages/send\`
 - Envio de mídia com upload - \`POST /api/messages/send-media\` 
 - Resposta com citação - \`POST /api/messages/reply\`
@@ -919,7 +957,7 @@ function generateScalarHTML() {
   <script 
     id="api-reference" 
     type="application/json"
-    data-url="/api-spec.json?v=3.4.4"
+    data-url="/api-spec.json?v=3.8.1"
     data-configuration='${JSON.stringify({
       theme: 'none',
       showSidebar: true,
@@ -984,12 +1022,13 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     service: 'Zionic API Documentation',
-    version: '3.8.0',
+    version: '3.8.1',
     timestamp: new Date().toISOString(),
     ui: 'Scalar API Reference',
     endpoints: 44,
     baseUrl: 'https://api.zionic.app',
     new_features: [
+      '🆕 v3.8.1: Parâmetro openai_thread_id em endpoints de mensagens - Anexa threads OpenAI às conversas',
       '🆕 v3.8.0: GET /api/conversation/find-by-phone/:phone - Busca conversa por telefone normalizado',
       '🆕 v3.7.0: Sistema completo de cálculo de tokens OpenAI usando Tiktoken',
       '🆕 v3.7.0: GET /api/tokens/models - Lista modelos suportados com limitações',
@@ -1069,7 +1108,21 @@ app.get('/health', (req, res) => {
  * /api/messages/send:
  *   post:
  *     summary: Enviar Mensagem de Texto por Número
- *     description: Envia uma mensagem de texto diretamente para um número de telefone, criando automaticamente contato e conversa se necessário
+ *     description: |
+ *       Envia uma mensagem de texto diretamente para um número de telefone, criando automaticamente contato e conversa se necessário.
+ *       
+ *       **✨ NOVO na v3.8.1:** Parâmetro `openai_thread_id` para anexar threads OpenAI às conversas.
+ *       
+ *       **Funcionalidades:**
+ *       - Criação automática de contato e conversa
+ *       - Suporte a múltiplas instâncias WhatsApp
+ *       - **Novo:** Anexação automática de thread OpenAI à conversa
+ *       - Salva automaticamente no histórico da conversa
+ *       - Integração com sistema de notificações
+ *       
+ *       **Thread OpenAI:**
+ *       Quando fornecido, o `openai_thread_id` é salvo no campo `openai_thread_id` da conversa criada,
+ *       permitindo que agentes IA mantenham contexto e histórico nas futuras interações.
  *     tags:
  *       - 📞 Mensagens por Número
  *     security:
@@ -1103,6 +1156,11 @@ app.get('/health', (req, res) => {
  *                 type: string
  *                 description: Nome específico da instância WhatsApp (opcional)
  *                 example: "vendas-sp"
+ *               openai_thread_id:
+ *                 type: string
+ *                 description: ID da thread OpenAI para anexar à conversa (opcional)
+ *                 example: "thread_abc123def456"
+ *                 pattern: "^thread_[a-zA-Z0-9]+$"
  *     responses:
  *       200:
  *         description: Mensagem enviada com sucesso
@@ -1141,6 +1199,10 @@ app.get('/health', (req, res) => {
  *                     isNewConversation:
  *                       type: boolean
  *                       description: Se é uma nova conversa criada
+ *                     openaiThreadId:
+ *                       type: string
+ *                       description: ID da thread OpenAI anexada à conversa
+ *                       nullable: true
  *                     number:
  *                       type: string
  *                       description: Número limpo usado
@@ -1162,7 +1224,16 @@ app.get('/health', (req, res) => {
  * /api/messages/send-media:
  *   post:
  *     summary: Enviar Mídia por Número
- *     description: Envia um arquivo de mídia (imagem, vídeo, áudio ou documento) para um número de telefone
+ *     description: |
+ *       Envia um arquivo de mídia (imagem, vídeo, áudio ou documento) para um número de telefone.
+ *       
+ *       **✨ NOVO na v3.8.1:** Parâmetro `openai_thread_id` para anexar threads OpenAI às conversas.
+ *       
+ *       **Funcionalidades:**
+ *       - Upload direto de arquivos via FormData
+ *       - Suporte a diversos tipos de mídia
+ *       - **Novo:** Anexação automática de thread OpenAI à conversa
+ *       - Criação automática de contato e conversa se necessário
  *     tags:
  *       - 📞 Mensagens por Número
  *     security:
@@ -1197,6 +1268,11 @@ app.get('/health', (req, res) => {
  *                 type: string
  *                 description: Nome específico da instância WhatsApp (opcional)
  *                 example: "vendas-sp"
+ *               openai_thread_id:
+ *                 type: string
+ *                 description: ID da thread OpenAI para anexar à conversa (opcional)
+ *                 example: "thread_abc123def456"
+ *                 pattern: "^thread_[a-zA-Z0-9]+$"
  *     responses:
  *       200:
  *         description: Mídia enviada com sucesso
@@ -1211,7 +1287,16 @@ app.get('/health', (req, res) => {
  * /api/messages/reply:
  *   post:
  *     summary: Responder Mensagem Específica
- *     description: Responde uma mensagem específica citando-a (reply/quote), criando uma resposta linkada à mensagem original
+ *     description: |
+ *       Responde uma mensagem específica citando-a (reply/quote), criando uma resposta linkada à mensagem original.
+ *       
+ *       **✨ NOVO na v3.8.1:** Parâmetro `openai_thread_id` para anexar threads OpenAI às conversas.
+ *       
+ *       **Funcionalidades:**
+ *       - Citação automática da mensagem original
+ *       - Resposta linkada visualmente no WhatsApp
+ *       - **Novo:** Anexação automática de thread OpenAI à conversa
+ *       - Usar instância da conversa original ou especificar nova
  *     tags:
  *       - 📞 Mensagens por Número
  *     security:
@@ -1247,6 +1332,11 @@ app.get('/health', (req, res) => {
  *                 type: string
  *                 description: Nome específico da instância WhatsApp (opcional)
  *                 example: "vendas-sp"
+ *               openai_thread_id:
+ *                 type: string
+ *                 description: ID da thread OpenAI para anexar à conversa (opcional)
+ *                 example: "thread_abc123def456"
+ *                 pattern: "^thread_[a-zA-Z0-9]+$"
  *     responses:
  *       200:
  *         description: Resposta enviada com sucesso
