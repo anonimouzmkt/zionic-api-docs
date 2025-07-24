@@ -16,13 +16,59 @@ const swaggerOptions = {
     openapi: '3.0.3',
     info: {
       title: '🚀 Zionic API',
-      version: '3.9.0',
+      version: '3.9.1',
       description: `
 # API Zionic - WhatsApp Business Integração
 
 **Plataforma completa para automação de WhatsApp Business**
 
-**✨ ATUALIZADO v3.9.0 - Criação e Movimentação de Leads com Pipelines Específicos**
+**✨ ATUALIZADO v3.9.1 - Vinculação Inteligente de Leads em Agendamentos**
+
+**🎯 NOVO v3.9.1: Integração Inteligente Calendar + Leads:**
+
+\`\`\`javascript
+// MÉTODO 1: Vinculação automática por telefone
+POST /api/calendar/schedule
+{
+  "title": "Reunião com cliente",
+  "start_time": "2024-01-15T14:00:00",
+  "end_time": "2024-01-15T15:00:00",
+  "contact_phone": "11999999999",  // 🎯 BUSCA AUTOMÁTICA
+  "calendar_id": "uuid-da-agenda"
+}
+// ✅ Sistema busca automaticamente o lead pelo telefone e vincula
+
+// MÉTODO 2: Vinculação automática por email  
+POST /api/calendar/schedule
+{
+  "title": "Apresentação proposta",
+  "start_time": "2024-01-15T16:00:00",
+  "end_time": "2024-01-15T17:00:00",
+  "contact_email": "cliente@empresa.com",  // 🎯 BUSCA AUTOMÁTICA
+  "calendar_id": "uuid-da-agenda"
+}
+// ✅ Sistema busca automaticamente o lead pelo email e vincula
+
+// MÉTODO 3: Vinculação direta (método tradicional)
+POST /api/calendar/schedule  
+{
+  "title": "Fechamento negócio",
+  "start_time": "2024-01-15T18:00:00",
+  "end_time": "2024-01-15T19:00:00", 
+  "lead_id": "uuid-do-lead",  // 🎯 VINCULAÇÃO DIRETA
+  "calendar_id": "uuid-da-agenda"
+}
+\`\`\`
+
+**✅ FUNCIONALIDADES v3.9.1:**
+- Busca automática de leads por telefone/email do contato
+- Vinculação automática quando contato encontrado
+- Notificações automáticas quando lead é vinculado automaticamente
+- Compatibilidade total com método tradicional (lead_id direto)
+- Integração automática com Google Calendar (evento criado instantaneamente)
+- Informações detalhadas sobre processo de vinculação na resposta
+
+**✨ FUNCIONALIDADES v3.9.0 - Criação e Movimentação de Leads com Pipelines Específicos**
 
 **🎯 NOVO: Controle Total de Pipelines:**
 
@@ -167,9 +213,9 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Buscar coluna específica - \`GET /api/columns/:id\`
 - Listar leads de uma coluna - \`GET /api/columns/:id/leads\`
 
-### **Gerenciamento de Agendamentos** 📅 **NOVO FORMATO na v3.6.0**
+### **Gerenciamento de Agendamentos** 📅 **VINCULAÇÃO INTELIGENTE na v3.9.1**
 - Verificar disponibilidade - \`GET /api/calendar/availability\` **[start_time/end_time ISO 8601]**
-- Agendar horário - \`POST /api/calendar/schedule\` **[calendar_id obrigatório no body]**
+- Agendar horário - \`POST /api/calendar/schedule\` **[🎯 NOVO: vinculação automática de leads por contact_phone/email]**
 - Listar agendamentos - \`GET /api/calendar/appointments\` **[start_time/end_time ISO ou filtros legacy]**
 - Atualizar agendamento - \`PUT /api/calendar/appointments/:id\` **[calendar_id opcional para mover agenda]**
 - Deletar agendamento - \`DELETE /api/calendar/appointments/:id\`
@@ -181,6 +227,9 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 - Calcular tokens de entrada - \`POST /api/tokens/count\`
 - Validar entrada para modelo - \`POST /api/tokens/validate\`
 - Testar encoding específico - \`GET /api/tokens/encoding/:model\`
+- **🎯 v3.9.1**: Vinculação inteligente de leads em agendamentos (busca automática por telefone/email)
+- **🎯 v3.9.1**: Notificações automáticas quando leads são vinculados automaticamente
+- **🎯 v3.9.1**: Informações detalhadas sobre processo de vinculação na resposta da API
 - **🆕 v3.6.1**: Sistema completo de anexos para leads (upload base64, preview, categorização)
 - **🆕 v3.6.0**: Formato ISO 8601 unificado (ex: 2025-07-07T11:30:00)
 - **🆕 v3.6.0**: Simplificação de data/hora em parâmetro único
@@ -1168,6 +1217,10 @@ app.get('/health', (req, res) => {
     baseUrl: 'https://api.zionic.app',
     new_features: [
       '🆕 v3.8.1: Parâmetro openai_thread_id em endpoints de mensagens - Anexa threads OpenAI às conversas',
+      '🎯 v3.9.1: Vinculação inteligente de leads em agendamentos via contact_phone/email',
+      '🎯 v3.9.1: POST /api/calendar/schedule - Busca automática de leads por telefone/email',
+      '🎯 v3.9.1: Notificações automáticas quando leads são vinculados automaticamente',
+      '🎯 v3.9.1: Informações detalhadas sobre processo de vinculação na resposta',
       '🆕 v3.8.0: GET /api/conversation/find-by-phone/:phone - Busca conversa por telefone normalizado',
       '🆕 v3.7.0: Sistema completo de cálculo de tokens OpenAI usando Tiktoken',
       '🆕 v3.7.0: GET /api/tokens/models - Lista modelos suportados com limitações',
@@ -4849,15 +4902,24 @@ app.get('/health', (req, res) => {
  *   post:
  *     summary: Agendar Horário
  *     description: |
- *       **📅 ATUALIZADO na v3.5.0** - Cria um novo agendamento com validações automáticas e integração AUTOMÁTICA com Google Calendar.
+ *       **📅 ATUALIZADO na v3.9.1** - Cria um novo agendamento com validações automáticas, integração AUTOMÁTICA com Google Calendar e vinculação inteligente de leads.
  *       
- *       **✨ NOVA FUNCIONALIDADE v3.5.0:**
+ *       **✨ NOVA FUNCIONALIDADE v3.9.1:**
+ *       - **VINCULAÇÃO INTELIGENTE DE LEADS**: Busca automática de leads por telefone/email
+ *       - **NOTIFICAÇÕES AUTOMÁTICAS**: Notifica quando leads são automaticamente vinculados
+ *       - **BUSCA POR CONTATO**: Localiza contatos e leads existentes automaticamente
  *       - **INTEGRAÇÃO AUTOMÁTICA**: Evento criado instantaneamente no Google Calendar
  *       - **REFRESH AUTOMÁTICO**: Renova tokens expirados automaticamente
  *       - **MÚLTIPLAS AGENDAS**: Suporte a várias integrações por empresa
  *       - **GOOGLE MEET**: Geração automática de links de reunião
  *       
- *       **Funcionalidades:**
+ *       **Funcionalidades de Vinculação:**
+ *       - Vinculação automática de leads baseada em contact_phone ou contact_email
+ *       - Validação automática de leads fornecidos diretamente
+ *       - Criação de notificações quando leads são automaticamente vinculados
+ *       - Busca inteligente em base de contatos existentes
+ *       
+ *       **Funcionalidades Gerais:**
  *       - Validação automática de conflitos de horário
  *       - Integração obrigatória com agenda específica (calendar_id)
  *       - Criação automática de Google Meet (se habilitado na integração)
@@ -4912,8 +4974,17 @@ app.get('/health', (req, res) => {
  *               lead_id:
  *                 type: string
  *                 format: uuid
- *                 description: ID do lead associado (opcional)
+ *                 description: ID do lead associado (opcional). Se não fornecido, o sistema tentará buscar automaticamente usando contact_phone ou contact_email
  *                 example: "550e8400-e29b-41d4-a716-446655440000"
+ *               contact_phone:
+ *                 type: string
+ *                 description: Telefone do contato para busca automática de lead existente (opcional)
+ *                 example: "11999999999"
+ *               contact_email:
+ *                 type: string
+ *                 format: email
+ *                 description: Email do contato para busca automática de lead existente (opcional)
+ *                 example: "cliente@empresa.com"
  *               calendar_id:
  *                 type: string
  *                 format: uuid
@@ -4981,6 +5052,16 @@ app.get('/health', (req, res) => {
  *                     phone: "+5511999999999"
  *                 calendar_id: "550e8400-e29b-41d4-a716-446655440001"
  *                 create_google_meet: true
+ *             auto_lead_linking:
+ *               summary: Agendamento com Busca Automática de Lead
+ *               value:
+ *                 title: "Reunião com cliente existente"
+ *                 description: "Sistema busca automaticamente o lead pelo telefone"
+ *                 start_time: "2024-01-15T16:00:00.000Z"
+ *                 end_time: "2024-01-15T17:00:00.000Z"
+ *                 contact_phone: "11999999999"
+ *                 calendar_id: "550e8400-e29b-41d4-a716-446655440001"
+ *                 create_google_meet: true
  *             agent_created:
  *               summary: Agendamento Criado por Agente IA
  *               value:
@@ -5034,6 +5115,59 @@ app.get('/health', (req, res) => {
  *                           type: boolean
  *                           description: Indica se foi criado por agente IA
  *                           example: false
+ *                     lead_linking:
+ *                       type: object
+ *                       description: Informações sobre vinculação de lead
+ *                       properties:
+ *                         has_lead:
+ *                           type: boolean
+ *                           description: Se o agendamento foi vinculado a um lead
+ *                           example: true
+ *                         lead_id:
+ *                           type: string
+ *                           format: uuid
+ *                           nullable: true
+ *                           description: ID do lead vinculado
+ *                         auto_linked:
+ *                           type: boolean
+ *                           description: Se o lead foi encontrado automaticamente
+ *                           example: true
+ *                         method:
+ *                           type: string
+ *                           enum: [provided_directly, auto_found_by_contact, not_linked]
+ *                           description: Método de vinculação usado
+ *                           example: "auto_found_by_contact"
+ *                         message:
+ *                           type: string
+ *                           description: Descrição do resultado da vinculação
+ *                           example: "Lead \"João Silva - Interessado\" automaticamente vinculado ao agendamento"
+ *                         lead_info:
+ *                           type: object
+ *                           nullable: true
+ *                           description: Informações do lead vinculado
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                               format: uuid
+ *                             title:
+ *                               type: string
+ *                               example: "João Silva - Interessado"
+ *                             estimated_value:
+ *                               type: number
+ *                               example: 5000
+ *                             priority:
+ *                               type: string
+ *                               example: "high"
+ *                             pipeline:
+ *                               type: string
+ *                               example: "Vendas"
+ *                             column:
+ *                               type: string
+ *                               example: "Negociação"
+ *                         contact_info:
+ *                           type: object
+ *                           nullable: true
+ *                           description: Informações do contato encontrado (se busca automática)
  *                     google_calendar:
  *                       type: object
  *                       properties:
