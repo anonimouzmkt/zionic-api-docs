@@ -16,11 +16,54 @@ const swaggerOptions = {
     openapi: '3.0.3',
     info: {
       title: '🚀 Zionic API',
-      version: '3.8.1',
+      version: '3.9.0',
       description: `
 # API Zionic - WhatsApp Business Integração
 
 **Plataforma completa para automação de WhatsApp Business**
+
+**✨ ATUALIZADO v3.9.0 - Criação e Movimentação de Leads com Pipelines Específicos**
+
+**🎯 NOVO: Controle Total de Pipelines:**
+
+\`\`\`javascript
+// Criar lead em pipeline específico
+POST /api/leads
+{
+  "title": "João Silva - Interessado",
+  "phone": "11999999999",
+  "pipeline_id": "uuid-do-pipeline",
+  "column_id": "uuid-da-coluna" // opcional
+}
+
+// Mover lead entre colunas/pipelines
+POST /api/leads/lead-id/move
+{
+  "column_id": "nova-coluna-id",
+  "position": 1 // opcional
+}
+
+// Transferir lead para outro pipeline
+POST /api/leads/lead-id/move-to-pipeline
+{
+  "pipeline_id": "outro-pipeline-id",
+  "column_id": "coluna-especifica-id" // opcional
+}
+
+// Listar pipelines da empresa
+GET /api/pipelines
+
+// Obter pipeline padrão
+GET /api/pipelines/default/info
+\`\`\`
+
+**✅ FUNCIONALIDADES v3.9.0:**
+- Criação de leads em pipelines específicos
+- Movimentação inteligente entre colunas e pipelines
+- Validação automática de permissões
+- Cálculo inteligente de posições
+- Registro automático de atividades
+- Integração completa com sistema de pipelines existente
 
 **✨ ATUALIZADO v3.8.1 - Suporte a OpenAI Thread ID em endpoints de mensagens**
 
@@ -96,24 +139,25 @@ A API Zionic oferece integração robusta com WhatsApp Business, permitindo envi
 ### **Controle de Agentes** ✨ **NOVO na v3.1**
 - Pausar ou atribuir agentes - \`POST /api/conversation/agent-control\`
 
-### **Gerenciamento de Leads** 🎯 **NOVO na v3.2**
+### **Gerenciamento de Leads** 🎯 **ATUALIZADO na v3.9.0**
 - Listar leads - \`GET /api/leads\`
-- Criar lead - \`POST /api/leads\`
+- **✨ NOVO** Criar lead em pipeline específico - \`POST /api/leads\` (com \`pipeline_id\` e \`column_id\`)
 - Buscar lead específico - \`GET /api/leads/:id\`
 - Atualizar lead - \`PUT /api/leads/:id\`
 - Deletar lead - \`DELETE /api/leads/:id\`
-- Mover lead entre colunas - \`POST /api/leads/:id/move\`
+- **✨ MELHORADO** Mover lead entre colunas - \`POST /api/leads/:id/move\`
+- **✨ NOVO** Transferir lead entre pipelines - \`POST /api/leads/:id/move-to-pipeline\`
 - Listar leads de uma coluna - \`GET /api/leads/column/:column_id\`
 
-### **Anexos de Leads** 📎 **NOVO na v3.2**
+### **Anexos de Leads** 📎 **NOVO na v3.3**
 - Anexar documento via base64 - \`POST /api/leads/attachments/:leadId\`
 - Listar anexos do lead - \`GET /api/leads/attachments/:leadId\`
 - Deletar anexo - \`DELETE /api/leads/attachments/:leadId/:attachmentId\`
 
-### **Gerenciamento de Pipelines** 📊 **NOVO na v3.2**
-- Listar pipelines - \`GET /api/pipelines\`
+### **Gerenciamento de Pipelines** 🔄 **ATUALIZADO na v3.9.0**
+- Listar pipelines da empresa - \`GET /api/pipelines\`
 - Buscar pipeline específico - \`GET /api/pipelines/:id\`
-- Buscar pipeline padrão - \`GET /api/pipelines/default/info\`
+- Obter pipeline padrão - \`GET /api/pipelines/default/info\`
 - Listar colunas de um pipeline - \`GET /api/pipelines/:id/columns\`
 - Listar todas as colunas - \`GET /api/pipelines/columns/all\`
 - Estatísticas do pipeline - \`GET /api/pipelines/:id/stats\`
@@ -220,6 +264,59 @@ POST /api/calendar/schedule {
 - ✅ **Tokens Automáticos**: Renovação automática sem intervenção manual
 - ✅ **Google Meet**: Links gerados automaticamente para reuniões
 - ✅ **Sincronização Real**: Alterações refletidas imediatamente no Google
+
+**🎯 GUIA DE USO - PIPELINES E LEADS (v3.9.0):**
+
+\`\`\`javascript
+// 🔄 1. LISTAR PIPELINES DISPONÍVEIS
+GET /api/pipelines
+Headers: { "Authorization": "Bearer zio_sua_api_key" }
+// Retorna: lista com pipelines da empresa, colunas e configurações
+
+// 📌 2. CRIAR LEAD EM PIPELINE ESPECÍFICO
+POST /api/leads
+Headers: { "Authorization": "Bearer zio_sua_api_key" }
+Body: {
+  "title": "João Silva - Interessado em Automação",
+  "phone": "11999999999",
+  "email": "joao@exemplo.com",
+  "pipeline_id": "abc123-def456-ghi789",  // ← Pipeline específico
+  "column_id": "xyz789-uvw456-rst123",     // ← Coluna específica (opcional)
+  "priority": "high",
+  "source": "whatsapp"
+}
+// Resultado: Lead criado na coluna exata do pipeline desejado
+
+// 🔄 3. MOVER LEAD ENTRE COLUNAS
+POST /api/leads/lead-uuid/move
+Headers: { "Authorization": "Bearer zio_sua_api_key" }
+Body: {
+  "column_id": "nova-coluna-uuid",
+  "position": 2  // opcional - posição na coluna
+}
+// Resultado: Lead movido com registro de atividade automático
+
+// 🎯 4. TRANSFERIR LEAD ENTRE PIPELINES
+POST /api/leads/lead-uuid/move-to-pipeline
+Headers: { "Authorization": "Bearer zio_sua_api_key" }
+Body: {
+  "pipeline_id": "outro-pipeline-uuid",
+  "column_id": "coluna-destino-uuid"  // opcional - usa primeira coluna se não informado
+}
+// Resultado: Lead transferido completamente para outro pipeline
+
+// 📊 5. OBTER ESTATÍSTICAS DE PIPELINE
+GET /api/pipelines/pipeline-uuid/stats
+Headers: { "Authorization": "Bearer zio_sua_api_key" }
+// Retorna: total de leads, valores, estatísticas por coluna
+\`\`\`
+
+**✨ CASOS DE USO v3.9.0:**
+- 🎯 **Criação Dirigida**: Criar leads diretamente no pipeline correto (vendas, suporte, etc.)
+- 🔄 **Fluxo Automático**: Mover leads automaticamente conforme progresso
+- 🎛️ **Multi-Pipeline**: Transferir leads entre departamentos (comercial → pós-venda)
+- 📊 **Analytics**: Acompanhar performance de cada pipeline individualmente
+- 🤖 **Automação N8N**: Integrar movimentações com automações externas
 
 **📎 GUIA DE USO - ANEXOS DE LEADS (v3.6.1):**
 
@@ -492,6 +589,48 @@ https://api.zionic.app
     security: [
       {
         BearerAuth: []
+      }
+    ],
+        tags: [
+      {
+        name: 'Autenticação',
+        description: 'Endpoints para teste e validação de API Keys'
+      },
+      {
+        name: '📞 Mensagens por Número',
+        description: 'Envio direto de mensagens e mídia via número de telefone'
+      },
+      {
+        name: '💬 Mensagens via Conversation',
+        description: 'Envio de mensagens através de conversas existentes'
+      },
+      {
+        name: '📤 Upload Direto de Arquivos',
+        description: 'Upload e envio simultâneo de imagens, áudios, vídeos e documentos'
+      },
+      {
+        name: '🎛️ Controle de Agentes (v3.1)',
+        description: 'Pausar, ativar e controlar agentes em conversas'
+      },
+      {
+        name: '🎯 Leads Management',
+        description: 'Criação, atualização, movimentação e gestão completa de leads com pipelines'
+      },
+      {
+        name: '📎 Lead Attachments',
+        description: 'Upload e gestão de documentos anexados aos leads'
+      },
+      {
+        name: '📊 Pipelines Management',
+        description: 'Gestão de pipelines, colunas e estatísticas do CRM'
+      },
+      {
+        name: '📅 Calendar Management (v3.6.0)',
+        description: 'Integração com Google Calendar para agendamentos automáticos'
+      },
+      {
+        name: '🧮 Token Calculation (v3.7.0)',
+        description: 'Cálculo e análise de tokens para modelos de IA'
       }
     ]
   },
@@ -3575,8 +3714,24 @@ app.get('/health', (req, res) => {
  *                         totalPages:
  *                           type: integer
  *   post:
- *     summary: Criar Lead
- *     description: Cria um novo lead no sistema usando a função unificada do banco
+ *     summary: Criar Lead com Pipeline Específico ✨ NOVO v3.9.0
+ *     description: |
+ *       **✨ ATUALIZADO na v3.9.0** - Agora suporta criação direta em pipelines específicos
+ *       
+ *       Cria um novo lead no sistema com posicionamento inteligente em pipelines:
+ *       
+ *       **Funcionalidades v3.9.0:**
+ *       - Criação em pipeline específico via `pipeline_id`
+ *       - Posicionamento em coluna específica via `column_id`
+ *       - Validação automática de permissões
+ *       - Cálculo inteligente de posições
+ *       - Registro automático de atividades
+ *       - Fallback para pipeline padrão se não especificado
+ *       
+ *       **Comportamento:**
+ *       - Se `pipeline_id` não fornecido: usa pipeline padrão da empresa
+ *       - Se `column_id` não fornecido: usa primeira coluna do pipeline
+ *       - Valida se pipeline/coluna pertencem à empresa
  *     tags:
  *       - 🎯 Leads Management
  *     security:
@@ -3610,8 +3765,9 @@ app.get('/health', (req, res) => {
  *                 example: 5000.00
  *               priority:
  *                 type: string
- *                 enum: [low, medium, high, urgent]
+ *                 enum: [low, medium, high]
  *                 example: "high"
+ *                 description: "Valores válidos: low (baixa), medium (média), high (alta)"
  *               source:
  *                 type: string
  *                 example: "whatsapp"
@@ -3624,6 +3780,24 @@ app.get('/health', (req, res) => {
  *                 type: string
  *                 format: uuid
  *                 description: ID de contato existente (opcional)
+ *               pipeline_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: |
+ *                   **✨ NOVO na v3.9.0** - ID do pipeline onde criar o lead.
+ *                   
+ *                   Se não fornecido, usa o pipeline padrão da empresa.
+ *                   Pipeline deve pertencer à empresa.
+ *                 example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *               column_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: |
+ *                   **✨ NOVO na v3.9.0** - ID da coluna específica no pipeline.
+ *                   
+ *                   Se não fornecido, usa a primeira coluna do pipeline.
+ *                   Coluna deve pertencer ao pipeline especificado.
+ *                 example: "f1e2d3c4-b5a6-9087-fedc-ba0987654321"
  *               custom_fields:
  *                 type: object
  *                 description: Campos personalizados
@@ -3726,8 +3900,19 @@ app.get('/health', (req, res) => {
  *
  * /api/leads/{id}/move:
  *   post:
- *     summary: Mover Lead Entre Colunas
- *     description: Move um lead para uma coluna específica de um pipeline
+ *     summary: Mover Lead Entre Colunas ✨ MELHORADO v3.9.0
+ *     description: |
+ *       **✨ MELHORADO na v3.9.0** - Movimentação inteligente com registro de atividades
+ *       
+ *       Move um lead para uma coluna específica de qualquer pipeline com:
+ *       
+ *       **Funcionalidades v3.9.0:**
+ *       - Movimentação entre colunas do mesmo pipeline ou pipelines diferentes
+ *       - Remoção automática do mapeamento anterior (evita duplicatas)
+ *       - Cálculo inteligente de posição se não especificada
+ *       - Registro automático de atividade de movimentação
+ *       - Validação completa de permissões
+ *       - Resposta detalhada com informações do pipeline/coluna
  *     tags:
  *       - 🎯 Leads Management
  *     security:
@@ -3739,6 +3924,7 @@ app.get('/health', (req, res) => {
  *         schema:
  *           type: string
  *           format: uuid
+ *         description: ID do lead a ser movido
  *     requestBody:
  *       required: true
  *       content:
@@ -3751,19 +3937,157 @@ app.get('/health', (req, res) => {
  *               column_id:
  *                 type: string
  *                 format: uuid
- *                 description: ID da coluna de destino
- *               pipeline_id:
- *                 type: string
- *                 format: uuid
- *                 description: ID do pipeline (opcional, será derivado da coluna)
+ *                 description: ID da coluna de destino (deve pertencer à empresa)
+ *                 example: "f1e2d3c4-b5a6-9087-fedc-ba0987654321"
  *               position:
  *                 type: integer
- *                 description: Posição na coluna (opcional)
+ *                 description: |
+ *                   Posição específica na coluna (opcional).
+ *                   
+ *                   Se não fornecida, será calculada automaticamente
+ *                   como próxima posição disponível.
+ *                 example: 2
+ *                 minimum: 0
  *     responses:
  *       200:
  *         description: Lead movido com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     lead_id:
+ *                       type: string
+ *                       format: uuid
+ *                     lead_title:
+ *                       type: string
+ *                       example: "João Silva - Interessado"
+ *                     column_id:
+ *                       type: string
+ *                       format: uuid
+ *                     column_title:
+ *                       type: string
+ *                       example: "Em Negociação"
+ *                     pipeline_id:
+ *                       type: string
+ *                       format: uuid
+ *                     pipeline_name:
+ *                       type: string
+ *                       example: "Pipeline Vendas"
+ *                     position:
+ *                       type: integer
+ *                       example: 3
+ *                     message:
+ *                       type: string
+ *                       example: "Lead movido com sucesso"
  *       404:
  *         description: Lead ou coluna não encontrada
+ *       400:
+ *         description: Coluna não pertence à empresa
+ *
+ * /api/leads/{id}/move-to-pipeline:
+ *   post:
+ *     summary: Transferir Lead Entre Pipelines ✨ NOVO v3.9.0
+ *     description: |
+ *       **✨ NOVO na v3.9.0** - Transferência completa entre pipelines
+ *       
+ *       Transfere um lead para outro pipeline com posicionamento inteligente:
+ *       
+ *       **Funcionalidades:**
+ *       - Transferência completa entre pipelines diferentes
+ *       - Seleção automática da primeira coluna se não especificada
+ *       - Validação de pipeline e coluna
+ *       - Cálculo automático de posição
+ *       - Registro detalhado de atividade
+ *       - Resposta completa com dados do destino
+ *       
+ *       **Casos de uso:**
+ *       - Mover lead de "Prospecção" para "Vendas"
+ *       - Transferir entre diferentes times/departamentos
+ *       - Reposicionar leads em fluxos específicos
+ *     tags:
+ *       - 🎯 Leads Management
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID do lead a ser transferido
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - pipeline_id
+ *             properties:
+ *               pipeline_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID do pipeline de destino (deve pertencer à empresa)
+ *                 example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *               column_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: |
+ *                   ID da coluna específica no pipeline de destino (opcional).
+ *                   
+ *                   Se não fornecida, usa a primeira coluna do pipeline.
+ *                   Coluna deve pertencer ao pipeline especificado.
+ *                 example: "f1e2d3c4-b5a6-9087-fedc-ba0987654321"
+ *     responses:
+ *       200:
+ *         description: Lead transferido com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     lead_id:
+ *                       type: string
+ *                       format: uuid
+ *                     lead_title:
+ *                       type: string
+ *                       example: "João Silva - Interessado"
+ *                     pipeline_id:
+ *                       type: string
+ *                       format: uuid
+ *                     pipeline_name:
+ *                       type: string
+ *                       example: "Pipeline Vendas"
+ *                     column_id:
+ *                       type: string
+ *                       format: uuid
+ *                     column_title:
+ *                       type: string
+ *                       example: "Novo Lead"
+ *                     position:
+ *                       type: integer
+ *                       example: 1
+ *                     message:
+ *                       type: string
+ *                       example: 'Lead movido para pipeline "Pipeline Vendas" com sucesso'
+ *       404:
+ *         description: Lead ou pipeline não encontrado
+ *       400:
+ *         description: Pipeline/coluna não pertence à empresa ou pipeline sem colunas
  *
  * /api/leads/column/{column_id}:
  *   get:
@@ -6293,10 +6617,11 @@ app.listen(port, () => {
   console.log(`💚 Health Check: http://localhost:${port}/health`);
   console.log('');
   console.log(`🎨 Interface: Scalar API Reference (Clean Design)`);
-  console.log(`📊 Endpoints: 44 endpoints organizados`);
+  console.log(`📊 Endpoints: 47+ endpoints organizados`);
   console.log(`🌐 Base URL: https://api.zionic.app`);
   console.log(`🖼️ Logo: Zionic oficial integrado`);
-  console.log(`📱 Sidebar: Mensagens + Agent Control + CRM + Tokens (organizado)`);
+  console.log(`📱 Sidebar: 10 categorias organizadas - Leads + Pipelines + Tokens + Calendar`);
+  console.log(`🎯 v3.9.0: Criação e movimentação de leads com pipelines específicos - POST /leads move-to-pipeline`);
   console.log(`🔍 v3.8.0: Busca de conversas por telefone normalizado - GET /find-by-phone/:phone`);
   console.log(`🧮 v3.7.0: Sistema completo de cálculo de tokens OpenAI usando Tiktoken`);
   console.log(`📅 v3.6.0: Formato ISO 8601 unificado - Calendar endpoints simplificados`);
